@@ -1,3 +1,4 @@
+<img width="1344" height="768" alt="Gemini_Generated_Image_zfuz92zfuz92zfuz" src="https://github.com/user-attachments/assets/e94bdad1-fc74-4a52-8745-a05aacb466e6" />
 GameDB Authentication System
 
 A premium, modern authentication engine built with Flask and MariaDB, featuring secure password hashing, session management, and a robust password recovery system via Flask-Mail.
