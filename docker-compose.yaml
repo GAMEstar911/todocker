@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: gamedb
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d
+
+  web:
+    build: .
+    container_name: flask_app
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    # Docker Compose Watch configuration
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - __pycache__/
+            - .venv/
+            - .git/
+        - action: rebuild
+          path: requirements-flask.txt
+
+volumes:
+  db_data:

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Premium Modern Login</title>
+    <style>
+        /* --- CSS STYLES (Kept your original beautiful styling) --- */
+        * { padding: 0; margin: 0; box-sizing: border-box; font-family: "Poppins", sans-serif; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #0f172a, #1e1b4b, #581c87, #1e1b4b);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh; /* Changed to 100vh to center properly */
+            padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .box {
+            position: relative;
+            width: 400px;
+            min-height: 750px; 
+            background: #1c1c1c;
+            border-radius: 50px 5px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .box::before, .box::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 400px;
+            height: 850px;
+            background: linear-gradient(60deg, transparent, #45f3ff, #45f3ff);
+            transform-origin: bottom right;
+            animation: animate 6s linear infinite;
+        }
+
+        .box::after {
+            background: linear-gradient(60deg, transparent, #d9138a, #d9138a);
+            animation-delay: -3s;
+        }
+
+        @keyframes animate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        form {
+            position: absolute;
+            inset: 4px;
+            background: #28292d;
+            border-radius: 50px 5px;
+            z-index: 10;
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            overflow-y: auto; /* Ensure scrolling if content is long */
+        }
+
+        legend { color: #45f3ff; font-size: 1.5rem; margin-bottom: 20px; font-weight: 600; }
+        .input-box { position: relative; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #9eb3b5; font-size: 0.9rem; }
+        
+        input {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 15px;
+            font-size: 0.9rem;
+            color: white;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: #45f3ff; background: rgba(255, 255, 255, 0.1); }
+
+        .toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 38px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 11;
+        }
+
+        #password-message {
+            display: none;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+        }
+
+        .password-message-item { color: #ff4d4d; }
+        .password-message-item.valid { color: #00ff88; }
+        
+        #passwordError { font-size: 0.8rem; display: block; margin-top: 5px; }
+        .error { color: #ff4d4d; }
+        .success { color: #00ff88; }
+
+        input[type="submit"] {
+            margin-top: 10px;
+            background-color: #45f3ff;
+            cursor: pointer;
+            color: #16100e;
+            font-weight: 700;
+            border: none;
+            transition: 0.3s;
+        }
+
+        input[type="submit"]:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(69, 243, 255, 0.4); }
+
+        /* Navigation Buttons */
+        .nav-container { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-link { 
+            background: none; border: none; color: #45f3ff; cursor: pointer; 
+            font-size: 0.85rem; text-decoration: underline; 
+        }
+
+        /* Flash messages styling */
+        .flash { padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; }
+        .flash-success { background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88; color: #00ff88; }
+        .flash-danger { background: rgba(255, 77, 77, 0.1); border: 1px solid #ff4d4d; color: #ff4d4d; }
+        .flash-warning { background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; color: #ffcc00; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <form method="POST" action="/">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <input type="hidden" name="action" id="formAction" value="{{ section }}">
+
+            <div id="registerSection">
+                <legend>Create Account</legend>
+                <div class="input-box">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="John Doe" />
+                </div>
+                <div class="input-box">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="email@example.com" />
+                </div>
+                <div class="input-box">
+                    <label>Password</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" />
+                    <button type="button" id="togglePassword" class="toggle-btn">👁️</button>
+                </div>
+                <div id="password-message">
+                    <p class="password-message-item" id="low">● One lowercase letter</p>
+                    <p class="password-message-item" id="upp">● One uppercase letter</p>
+                    <p class="password-message-item" id="num">● One number</p>
+                    <p class="password-message-item" id="spec">● One special character</p>
+                    <p class="password-message-item" id="len">● Minimum 8 characters</p>
+                </div>
+                <div class="input-box">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••">
+                    <span id="passwordError"></span>
+                </div>
+                <input type="submit" value="Register Now">
+            </div>
+
+            <div id="loginSection" style="display:none;">
+                <legend>Welcome Back</legend>
+                <div class="input-box">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="email@example.com" />
+                </div>
+                <div class="input-box">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" autocomplete="off"/>
+                </div>
+                <input type="submit" value="Login">
+            </div>
+
+            <div id="forgotSection" style="display:none;">
+                <legend>Reset Password</legend>
+                <p style="font-size: 0.8rem; color: #9eb3b5; margin-bottom: 15px;">Enter your email to receive a reset link.</p>
+                <div class="input-box">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="email@example.com" />
+                </div>
+                <input type="submit" value="Send Link">
+            </div>
+
+            <div class="nav-container">
+                <button type="button" class="nav-link" id="btnGoLogin" onclick="showSection('login')">Already have an account? Login</button>
+                <button type="button" class="nav-link" id="btnGoRegister" onclick="showSection('register')" style="display:none;">Need an account? Register</button>
+                <button type="button" class="nav-link" onclick="showSection('forgot')">Forgot Password?</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+    const passwordMessage = document.getElementById("password-message");
+    const errorElement = document.getElementById("passwordError");
+
+    // SHOW SECTION LOGIC
+    function showSection(section) {
+    document.getElementById("formAction").value = section;
+    const sections = ["register", "login", "forgot"];
+    
+    sections.forEach(s => {
+        const div = document.getElementById(s + "Section");
+        const isCurrent = (s === section);
+        div.style.display = isCurrent ? "block" : "none";
+
+        // IMPORTANT FIX: Disable inputs in hidden sections 
+        // This prevents the browser from sending 3 different "email" values
+        const inputs = div.querySelectorAll("input");
+        inputs.forEach(input => {
+            if (isCurrent) {
+                input.removeAttribute("disabled");
+                input.setAttribute("required", "required");
+            } else {
+                input.setAttribute("disabled", "disabled"); // Browser will ignore these
+                input.removeAttribute("required");
+            }
+        });
+    });
+
+    // Toggle nav link visibility
+    document.getElementById("btnGoLogin").style.display = (section === 'register') ? "block" : "none";
+    document.getElementById("btnGoRegister").style.display = (section !== 'register') ? "block" : "none";
+}
+
+    // PASSWORD STRENGTH VALIDATION
+    passwordInput.addEventListener("focus", () => passwordMessage.style.display = "block");
+    passwordInput.addEventListener("keyup", () => {
+        const val = passwordInput.value;
+        const check = (id, regex) => {
+            const el = document.getElementById(id);
+            regex.test(val) ? el.classList.add("valid") : el.classList.remove("valid");
+        };
+        check("low", /[a-z]/);
+        check("upp", /[A-Z]/);
+        check("num", /[0-9]/);
+        check("spec", /[@$!%*?&_#]/);
+        check("len", /.{8,}/);
+
+        validatePasswords(); // check confirm password live
+    });
+
+    // CONFIRM PASSWORD MATCH CHECK
+    function validatePasswords() {
+        const passwordVal = passwordInput.value;
+        const confirmVal = confirmPasswordInput.value;
+
+        if (confirmVal === "") {
+            errorElement.textContent = "";
+            return;
+        }
+
+        if (passwordVal !== confirmVal) {
+            errorElement.textContent = "❌ Passwords do not match";
+            errorElement.classList.add("error");
+            errorElement.classList.remove("success");
+        } else {
+            errorElement.textContent = "✔ Passwords match";
+            errorElement.classList.remove("error");
+            errorElement.classList.add("success");
+        }
+    }
+    document.querySelector("form").addEventListener("submit", function(e) {
+    if (document.getElementById("password").value !== document.getElementById("confirmPassword").value &&
+        document.getElementById("formAction").value === "register") {
+        e.preventDefault();
+        document.getElementById("passwordError").textContent = "Passwords do not match";
+        document.getElementById("passwordError").classList.add("error");
+    }
+});
+
+    confirmPasswordInput.addEventListener("keyup", validatePasswords);
+
+    // TOGGLE PASSWORD VISIBILITY
+    document.getElementById("togglePassword").addEventListener("click", function() {
+        const type = passwordInput.type === "password" ? "text" : "password";
+        passwordInput.type = type;
+        this.textContent = type === "password" ? "👁️" : "🔒";
+    });
+
+    // INITIALIZE SECTION
+    window.onload = () => {
+        const initialSection = "{{ section or 'register' }}";
+        showSection(initialSection);
+    };
+</script>
+</body>
+</html>
