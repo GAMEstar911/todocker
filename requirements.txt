@@ -1,8 +1,10 @@
+blinker==1.7.0
 Flask==2.3.3
-Flask-MySQLdb==1.0.1
 Flask-Bcrypt==1.0.1
 Flask-Login==0.6.3
 Flask-Mail==0.9.1
+Flask-MySQLdb==1.0.1
+gunicorn==21.2.0
 itsdangerous==2.2.0
-python-dotenv==1.0.1
 mysqlclient==2.2.0
+python-dotenv==1.0.1
