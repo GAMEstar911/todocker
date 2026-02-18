@@ -15,6 +15,7 @@ from flask_login import (
     login_required, current_user
 )
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from smtplib import SMTPException
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 
@@ -134,6 +135,7 @@ app.config["MAIL_USE_SSL"] = env_bool("MAIL_USE_SSL", default=False)
 app.config["MAIL_USERNAME"] = env_first("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = env_first("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = env_first("MAIL_DEFAULT_SENDER", "MAIL_USERNAME")
+app.config["MAIL_TIMEOUT"] = int(env_first("MAIL_TIMEOUT", default="30"))
 
 mail = Mail(app)
 
@@ -238,14 +240,13 @@ def form2():
                 return redirect(url_for("form2"))
 
             token = serializer.dumps(email, salt="reset-password")
-
-            cursor.execute(
-                "UPDATE users SET reset_token=%s WHERE email=%s",
-                (token, email)
-            )
-            conn.commit()
-
             reset_link = f"{base_url}/reset/{token}"
+
+            if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
+                flash("Email service is not configured. Contact support.", "danger")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("form2"))
 
             msg = Message(
                 "Password Reset Request",
@@ -291,7 +292,29 @@ def form2():
                 </html>
             """
 
-            mail.send(msg)
+            cursor.execute(
+                "UPDATE users SET reset_token=%s WHERE email=%s",
+                (token, email)
+            )
+            conn.commit()
+
+            try:
+                mail.send(msg)
+            except (SMTPException, OSError):
+                app.logger.exception("Failed to send reset email to %s", email)
+                try:
+                    cursor.execute(
+                        "UPDATE users SET reset_token=NULL WHERE email=%s AND reset_token=%s",
+                        (email, token)
+                    )
+                    conn.commit()
+                except Exception:
+                    app.logger.exception("Failed to clear reset token for %s after mail error", email)
+                flash("Could not send reset email. Please try again shortly.", "danger")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("form2"))
+
             flash("Password reset link sent to your email!", "info")
 
         cursor.close()
