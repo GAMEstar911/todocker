@@ -135,7 +135,7 @@ app.config["MAIL_USE_SSL"] = env_bool("MAIL_USE_SSL", default=False)
 app.config["MAIL_USERNAME"] = env_first("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = env_first("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = env_first("MAIL_DEFAULT_SENDER", "MAIL_USERNAME")
-app.config["MAIL_TIMEOUT"] = int(env_first("MAIL_TIMEOUT", default="30"))
+app.config["MAIL_TIMEOUT"] = int(env_first("MAIL_TIMEOUT", default="10"))
 
 mail = Mail(app)
 
