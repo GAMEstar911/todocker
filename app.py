@@ -21,9 +21,13 @@ from dotenv import load_dotenv
 # ----------------- LOAD ENV -----------------
 load_dotenv()
 
+
 def env_first(*keys, default=None):
     for key in keys:
-        value = os.getenv(key)
+        raw_value = os.getenv(key)
+        if raw_value is None:
+            continue
+        value = raw_value.strip()
         if value:
             return value
     return default
@@ -48,20 +52,40 @@ if not app.secret_key:
     raise RuntimeError("SECRET_KEY is required")
 
 # ----------------- DATABASE CONFIG -----------------
-database_uri = env_first("SQLALCHEMY_DATABASE_URI")
+def normalize_database_uri(uri):
+    if not uri:
+        return uri
+    # Railway often provides mysql://..., but SQLAlchemy needs mysql+pymysql://...
+    if uri.startswith("mysql://"):
+        return "mysql+pymysql://" + uri[len("mysql://"):]
+    return uri
+
+
+database_uri = normalize_database_uri(env_first("SQLALCHEMY_DATABASE_URI", "DATABASE_URL"))
 if not database_uri:
-    db_user = env_first("MYSQL_USER", "MYSQLUSER")
-    db_password = env_first("MYSQL_PASSWORD", "MYSQLPASSWORD")
-    db_host = env_first("MYSQL_HOST", "MYSQLHOST")
-    db_port = env_first("MYSQL_PORT", "MYSQLPORT", default="3306")
-    db_name = env_first("MYSQL_DATABASE", "MYSQLDATABASE")
+    database_uri = normalize_database_uri(env_first("MYSQL_PUBLIC_URL", "MYSQL_URL"))
+
+if not database_uri:
+    # Prefer Railway-style keys first because MYSQL_HOST can be "db" from local compose.
+    db_user = env_first("MYSQLUSER", "MYSQL_USER")
+    db_password = env_first("MYSQLPASSWORD", "MYSQL_PASSWORD")
+    db_host = env_first("MYSQLHOST", "MYSQL_HOST")
+    db_port = env_first("MYSQLPORT", "MYSQL_PORT", default="3306")
+    db_name = env_first("MYSQLDATABASE", "MYSQL_DATABASE")
+
+    if is_production and db_host == "db":
+        raise RuntimeError(
+            "Invalid database host 'db' for production. "
+            "Set SQLALCHEMY_DATABASE_URI, MYSQL_PUBLIC_URL, MYSQL_URL, "
+            "or MYSQLHOST to your Railway database host."
+        )
 
     missing = [
         name for name, value in (
-            ("MYSQL_USER/MYSQLUSER", db_user),
-            ("MYSQL_PASSWORD/MYSQLPASSWORD", db_password),
-            ("MYSQL_HOST/MYSQLHOST", db_host),
-            ("MYSQL_DATABASE/MYSQLDATABASE", db_name),
+            ("MYSQLUSER/MYSQL_USER", db_user),
+            ("MYSQLPASSWORD/MYSQL_PASSWORD", db_password),
+            ("MYSQLHOST/MYSQL_HOST", db_host),
+            ("MYSQLDATABASE/MYSQL_DATABASE", db_name),
         ) if not value
     ]
     if missing:
