@@ -14,25 +14,85 @@ from flask_login import (
     login_user, logout_user,
     login_required, current_user
 )
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 
 # ----------------- LOAD ENV -----------------
 load_dotenv()
 
+def env_first(*keys, default=None):
+    for key in keys:
+        value = os.getenv(key)
+        if value:
+            return value
+    return default
+
+
+def env_bool(*keys, default=False):
+    value = env_first(*keys)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+app_env = env_first("APP_ENV", "FLASK_ENV", default="development").strip().lower()
+is_production = app_env == "production"
+debug_mode = env_bool("FLASK_DEBUG", default=False)
+if is_production:
+    debug_mode = False
+
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
+app.secret_key = env_first("SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY is required")
 
 # ----------------- DATABASE CONFIG -----------------
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"mysql+pymysql://{os.getenv('MYSQL_USER')}:"
-    f"{os.getenv('MYSQL_PASSWORD')}@"
-    f"{os.getenv('MYSQL_HOST')}/"
-    f"{os.getenv('MYSQL_DATABASE')}"
-)
+database_uri = env_first("SQLALCHEMY_DATABASE_URI")
+if not database_uri:
+    db_user = env_first("MYSQL_USER", "MYSQLUSER")
+    db_password = env_first("MYSQL_PASSWORD", "MYSQLPASSWORD")
+    db_host = env_first("MYSQL_HOST", "MYSQLHOST")
+    db_port = env_first("MYSQL_PORT", "MYSQLPORT", default="3306")
+    db_name = env_first("MYSQL_DATABASE", "MYSQLDATABASE")
 
+    missing = [
+        name for name, value in (
+            ("MYSQL_USER/MYSQLUSER", db_user),
+            ("MYSQL_PASSWORD/MYSQLPASSWORD", db_password),
+            ("MYSQL_HOST/MYSQLHOST", db_host),
+            ("MYSQL_DATABASE/MYSQLDATABASE", db_name),
+        ) if not value
+    ]
+    if missing:
+        raise RuntimeError(f"Missing database environment variables: {', '.join(missing)}")
+
+    database_uri = (
+        f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    )
+
+base_url = env_first("BASE_URL")
+if not base_url:
+    railway_domain = env_first("RAILWAY_PUBLIC_DOMAIN")
+    if railway_domain:
+        base_url = railway_domain.strip()
+        if not base_url.startswith(("http://", "https://")):
+            base_url = f"https://{base_url}"
+    else:
+        base_url = "http://localhost:5000"
+base_url = base_url.rstrip("/")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+}
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["REMEMBER_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = env_bool("SESSION_COOKIE_SECURE", default=is_production)
+app.config["REMEMBER_COOKIE_SECURE"] = env_bool("REMEMBER_COOKIE_SECURE", default=is_production)
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -43,15 +103,15 @@ login_manager.login_view = "form2"
 serializer = URLSafeTimedSerializer(app.secret_key)
 
 # ----------------- MAIL CONFIG -----------------
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
-app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_SERVER"] = env_first("MAIL_SERVER", default="smtp.gmail.com")
+app.config["MAIL_PORT"] = int(env_first("MAIL_PORT", default="587"))
+app.config["MAIL_USE_TLS"] = env_bool("MAIL_USE_TLS", default=True)
+app.config["MAIL_USE_SSL"] = env_bool("MAIL_USE_SSL", default=False)
+app.config["MAIL_USERNAME"] = env_first("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = env_first("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = env_first("MAIL_DEFAULT_SENDER", "MAIL_USERNAME")
 
 mail = Mail(app)
-app.extensions['mail'].debug = 1
 
 # ----------------- USER MODEL -----------------
 class User(UserMixin):
@@ -60,6 +120,7 @@ class User(UserMixin):
         self.email = email
         self.password = password
         self.name = name
+        self.full_name = name
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -84,8 +145,6 @@ def load_user(user_id):
 # ----------------- SINGLE FORM ROUTE -----------------
 @app.route("/", methods=["GET", "POST"])
 def form2():
-    print(">>> DOCKER WATCH: FILE SYNC IS SUCCESSFUL! <<<")
-
     if request.method == "POST":
         action = request.form.get("action")
 
@@ -162,7 +221,7 @@ def form2():
             )
             conn.commit()
 
-            reset_link = f"{os.getenv('BASE_URL')}/reset/{token}"
+            reset_link = f"{base_url}/reset/{token}"
 
             msg = Message(
                 "Password Reset Request",
@@ -222,7 +281,7 @@ def form2():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return f"Welcome {current_user.full_name}! <br><a href='/logout'>Logout</a>"
+    return f"Welcome {current_user.name}! <br><a href='/logout'>Logout</a>"
 
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
@@ -236,7 +295,7 @@ def logout():
 def reset(token):
     try:
         email = serializer.loads(token, salt="reset-password", max_age=900)
-    except:
+    except (SignatureExpired, BadSignature):
         flash("Invalid or expired token", "danger")
         return redirect(url_for("form2"))
 
@@ -276,4 +335,4 @@ def reset(token):
 
 # ----------------- RUN -----------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=int(env_first("PORT", default="5000")), debug=debug_mode)

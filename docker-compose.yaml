@@ -2,14 +2,14 @@ services:
   db:
     image: mariadb:11
     container_name: gamedb
+    profiles:
+      - local
     restart: always
-    env_file:
-      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${LOCAL_DB_ROOT_PASSWORD:-ChangeThisRootPass123!}
+      MARIADB_DATABASE: ${LOCAL_DB_NAME:-gamedb}
+      MARIADB_USER: ${LOCAL_DB_USER:-flaskuser}
+      MARIADB_PASSWORD: ${LOCAL_DB_PASSWORD:-FlaskPass123!}
     volumes:
       - db_data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d
@@ -22,8 +22,6 @@ services:
       - .env
     ports:
       - "5000:5000"
-    depends_on:
-      - db
     # Docker Compose Watch configuration
     develop:
       watch:
@@ -35,7 +33,7 @@ services:
             - .venv/
             - .git/
         - action: rebuild
-          path: requirements-flask.txt
+          path: requirements.txt
 
 volumes:
   db_data:
