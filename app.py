@@ -1,7 +1,10 @@
 import os
+import json
 import smtplib
 import pymysql
 from email.message import EmailMessage
+from urllib import error as urllib_error
+from urllib import request as urllib_request
 pymysql.install_as_MySQLdb()
 
 from flask import (
@@ -146,16 +149,26 @@ app.config["MAIL_USERNAME"] = env_first("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = env_first("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = env_first("MAIL_DEFAULT_SENDER", "MAIL_USERNAME")
 app.config["MAIL_TIMEOUT"] = env_int("MAIL_TIMEOUT", default=8)
+app.config["EMAIL_BACKEND"] = env_first("EMAIL_BACKEND")
+app.config["RESEND_API_KEY"] = env_first("RESEND_API_KEY")
+app.config["RESEND_API_BASE"] = env_first("RESEND_API_BASE", default="https://api.resend.com")
+app.config["RESEND_FROM_EMAIL"] = env_first(
+    "RESEND_FROM_EMAIL",
+    "MAIL_DEFAULT_SENDER",
+    "MAIL_USERNAME",
+)
+
+if not app.config["EMAIL_BACKEND"]:
+    app.config["EMAIL_BACKEND"] = "resend" if app.config["RESEND_API_KEY"] else "smtp"
+else:
+    app.config["EMAIL_BACKEND"] = app.config["EMAIL_BACKEND"].strip().lower()
 
 if app.config["MAIL_USE_TLS"] and app.config["MAIL_USE_SSL"]:
     raise RuntimeError("MAIL_USE_TLS and MAIL_USE_SSL cannot both be enabled")
 
 
 def send_reset_email(recipient_email, reset_link):
-    sender = app.config["MAIL_DEFAULT_SENDER"] or app.config["MAIL_USERNAME"]
-    if not sender:
-        raise RuntimeError("MAIL_DEFAULT_SENDER or MAIL_USERNAME is required")
-
+    subject = "Password Reset Request"
     text_body = (
         "Hi,\n\n"
         "We received a request to reset your password.\n\n"
@@ -196,8 +209,23 @@ def send_reset_email(recipient_email, reset_link):
         </html>
     """
 
+    backend = app.config["EMAIL_BACKEND"]
+    if backend == "resend":
+        send_reset_email_via_resend(recipient_email, subject, text_body, html_body)
+        return
+    if backend == "smtp":
+        send_reset_email_via_smtp(recipient_email, subject, text_body, html_body)
+        return
+    raise RuntimeError("Unsupported EMAIL_BACKEND. Use 'smtp' or 'resend'.")
+
+
+def send_reset_email_via_smtp(recipient_email, subject, text_body, html_body):
+    sender = app.config["MAIL_DEFAULT_SENDER"] or app.config["MAIL_USERNAME"]
+    if not sender:
+        raise RuntimeError("MAIL_DEFAULT_SENDER or MAIL_USERNAME is required")
+
     message = EmailMessage()
-    message["Subject"] = "Password Reset Request"
+    message["Subject"] = subject
     message["From"] = sender
     message["To"] = recipient_email
     message.set_content(text_body)
@@ -225,6 +253,54 @@ def send_reset_email(recipient_email, reset_link):
             if app.config["MAIL_USERNAME"] and app.config["MAIL_PASSWORD"]:
                 smtp_conn.login(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"])
             smtp_conn.send_message(message)
+
+
+def send_reset_email_via_resend(recipient_email, subject, text_body, html_body):
+    api_key = app.config["RESEND_API_KEY"]
+    sender = app.config["RESEND_FROM_EMAIL"] or app.config["MAIL_DEFAULT_SENDER"] or app.config["MAIL_USERNAME"]
+    if not api_key:
+        raise RuntimeError("RESEND_API_KEY is required when EMAIL_BACKEND=resend")
+    if not sender:
+        raise RuntimeError("RESEND_FROM_EMAIL or MAIL_DEFAULT_SENDER is required")
+
+    payload = {
+        "from": sender,
+        "to": [recipient_email],
+        "subject": subject,
+        "text": text_body,
+        "html": html_body,
+    }
+    request_body = json.dumps(payload).encode("utf-8")
+    request = urllib_request.Request(
+        url=f"{app.config['RESEND_API_BASE'].rstrip('/')}/emails",
+        data=request_body,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+
+    try:
+        with urllib_request.urlopen(request, timeout=app.config["MAIL_TIMEOUT"]) as response:
+            status = getattr(response, "status", response.getcode())
+            if status >= 400:
+                raise RuntimeError(f"Resend API failed with status {status}")
+    except urllib_error.HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Resend API HTTP {exc.code}: {error_body[:240]}") from exc
+    except urllib_error.URLError as exc:
+        raise RuntimeError(f"Resend API network error: {exc.reason}") from exc
+
+
+def is_email_service_configured():
+    backend = app.config["EMAIL_BACKEND"]
+    if backend == "smtp":
+        return bool(app.config["MAIL_USERNAME"] and app.config["MAIL_PASSWORD"])
+    if backend == "resend":
+        sender = app.config["RESEND_FROM_EMAIL"] or app.config["MAIL_DEFAULT_SENDER"] or app.config["MAIL_USERNAME"]
+        return bool(app.config["RESEND_API_KEY"] and sender)
+    return False
 
 
 def open_db_connection():
@@ -370,7 +446,7 @@ def form2():
             token = serializer.dumps(email, salt="reset-password")
             reset_link = f"{base_url}/reset/{token}"
 
-            if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
+            if not is_email_service_configured():
                 flash("Email service is not configured. Contact support.", "danger")
                 cursor.close()
                 conn.close()
@@ -385,7 +461,11 @@ def form2():
             try:
                 send_reset_email(email, reset_link)
             except Exception:
-                app.logger.exception("Failed to send reset email to %s", email)
+                app.logger.exception(
+                    "Failed to send reset email to %s via %s",
+                    email,
+                    app.config["EMAIL_BACKEND"],
+                )
                 try:
                     cursor.execute(
                         "UPDATE users SET reset_token=NULL WHERE email=%s AND reset_token=%s",
