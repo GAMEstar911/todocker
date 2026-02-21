@@ -1,5 +1,7 @@
 import os
+import smtplib
 import pymysql
+from email.message import EmailMessage
 pymysql.install_as_MySQLdb()
 
 from flask import (
@@ -15,8 +17,6 @@ from flask_login import (
     login_required, current_user
 )
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from smtplib import SMTPException
-from flask_mail import Mail, Message
 from dotenv import load_dotenv
 
 # ----------------- LOAD ENV -----------------
@@ -39,6 +39,16 @@ def env_bool(*keys, default=False):
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_int(*keys, default=0):
+    value = env_first(*keys)
+    if value is None:
+        return default
+    try:
+        return int(value.strip())
+    except ValueError:
+        return default
 
 
 app_env = env_first("APP_ENV", "FLASK_ENV", default="development").strip().lower()
@@ -129,15 +139,102 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 
 # ----------------- MAIL CONFIG -----------------
 app.config["MAIL_SERVER"] = env_first("MAIL_SERVER", default="smtp.gmail.com")
-app.config["MAIL_PORT"] = int(env_first("MAIL_PORT", default="587"))
+app.config["MAIL_PORT"] = env_int("MAIL_PORT", default=587)
 app.config["MAIL_USE_TLS"] = env_bool("MAIL_USE_TLS", default=True)
 app.config["MAIL_USE_SSL"] = env_bool("MAIL_USE_SSL", default=False)
 app.config["MAIL_USERNAME"] = env_first("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = env_first("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = env_first("MAIL_DEFAULT_SENDER", "MAIL_USERNAME")
-app.config["MAIL_TIMEOUT"] = int(env_first("MAIL_TIMEOUT", default="10"))
+app.config["MAIL_TIMEOUT"] = env_int("MAIL_TIMEOUT", default=8)
 
-mail = Mail(app)
+if app.config["MAIL_USE_TLS"] and app.config["MAIL_USE_SSL"]:
+    raise RuntimeError("MAIL_USE_TLS and MAIL_USE_SSL cannot both be enabled")
+
+
+def send_reset_email(recipient_email, reset_link):
+    sender = app.config["MAIL_DEFAULT_SENDER"] or app.config["MAIL_USERNAME"]
+    if not sender:
+        raise RuntimeError("MAIL_DEFAULT_SENDER or MAIL_USERNAME is required")
+
+    text_body = (
+        "Hi,\n\n"
+        "We received a request to reset your password.\n\n"
+        "Use this link within 15 minutes:\n"
+        f"{reset_link}\n\n"
+        "If you didn't request this, ignore this email."
+    )
+    html_body = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; color: #1f2937;">
+                <p>Hi,</p>
+                <p>We received a request to reset your password.</p>
+                <p>This link is valid for 15 minutes.</p>
+                <p style="margin: 24px 0;">
+                    <a
+                        href="{reset_link}"
+                        style="
+                            display: inline-block;
+                            padding: 12px 24px;
+                            background-color: #1d4ed8;
+                            color: #ffffff;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            border: 1px solid #1e40af;
+                            font-weight: bold;
+                        "
+                    >
+                        Reset Password
+                    </a>
+                </p>
+                <p style="font-size: 14px; color: #4b5563;">
+                    If the button does not work, paste this link in your browser:
+                    <br>
+                    <a href="{reset_link}" style="color: #1d4ed8;">{reset_link}</a>
+                </p>
+                <p>If you didn't request this, ignore this email.</p>
+            </body>
+        </html>
+    """
+
+    message = EmailMessage()
+    message["Subject"] = "Password Reset Request"
+    message["From"] = sender
+    message["To"] = recipient_email
+    message.set_content(text_body)
+    message.add_alternative(html_body, subtype="html")
+
+    if app.config["MAIL_USE_SSL"]:
+        with smtplib.SMTP_SSL(
+            app.config["MAIL_SERVER"],
+            app.config["MAIL_PORT"],
+            timeout=app.config["MAIL_TIMEOUT"],
+        ) as smtp_conn:
+            if app.config["MAIL_USERNAME"] and app.config["MAIL_PASSWORD"]:
+                smtp_conn.login(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"])
+            smtp_conn.send_message(message)
+    else:
+        with smtplib.SMTP(
+            app.config["MAIL_SERVER"],
+            app.config["MAIL_PORT"],
+            timeout=app.config["MAIL_TIMEOUT"],
+        ) as smtp_conn:
+            smtp_conn.ehlo()
+            if app.config["MAIL_USE_TLS"]:
+                smtp_conn.starttls()
+                smtp_conn.ehlo()
+            if app.config["MAIL_USERNAME"] and app.config["MAIL_PASSWORD"]:
+                smtp_conn.login(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"])
+            smtp_conn.send_message(message)
+
+
+def open_db_connection():
+    try:
+        conn = db.engine.raw_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        return conn, cursor
+    except Exception:
+        app.logger.exception("Failed to open database connection")
+        return None, None
 
 # ----------------- USER MODEL -----------------
 class User(UserMixin):
@@ -150,8 +247,9 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    conn = db.engine.raw_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    conn, cursor = open_db_connection()
+    if not conn:
+        return None
 
     cursor.execute("SELECT * FROM users WHERE id=%s", (user_id,))
     user = cursor.fetchone()
@@ -172,16 +270,34 @@ def load_user(user_id):
 @app.route("/", methods=["GET", "POST"])
 def form2():
     if request.method == "POST":
-        action = request.form.get("action")
+        action = request.form.get("action", "").strip().lower()
+        if action not in {"register", "login", "forgot"}:
+            flash("Invalid request.", "danger")
+            return redirect(url_for("form2"))
 
-        conn = db.engine.raw_connection()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        conn, cursor = open_db_connection()
+        if not conn:
+            flash("Database is temporarily unavailable. Please try again shortly.", "danger")
+            return redirect(url_for("form2"))
 
         # ----------------- REGISTER -----------------
         if action == "register":
-            name = request.form["name"].strip()
-            email = request.form["email"].strip().lower()
-            password = request.form["password"].strip()
+            name = request.form.get("name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            password = request.form.get("password", "").strip()
+            confirm_password = request.form.get("confirmPassword", "").strip()
+
+            if not name or not email or not password or not confirm_password:
+                flash("Name, email, password, and confirm password are required.", "danger")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("form2"))
+
+            if password != confirm_password:
+                flash("Passwords do not match.", "danger")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("form2"))
 
             cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
             existing_user = cursor.fetchone()
@@ -204,8 +320,14 @@ def form2():
 
         # ----------------- LOGIN -----------------
         elif action == "login":
-            email = request.form["email"].strip().lower()
-            password = request.form["password"].strip()
+            email = request.form.get("email", "").strip().lower()
+            password = request.form.get("password", "").strip()
+
+            if not email or not password:
+                flash("Email and password are required.", "danger")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("form2"))
 
             cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
             user = cursor.fetchone()
@@ -228,7 +350,13 @@ def form2():
 
         # ----------------- FORGOT PASSWORD -----------------
         elif action == "forgot":
-            email = request.form["email"].strip().lower()
+            email = request.form.get("email", "").strip().lower()
+
+            if not email:
+                flash("Email is required.", "danger")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("form2"))
 
             cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
             user = cursor.fetchone()
@@ -248,50 +376,6 @@ def form2():
                 conn.close()
                 return redirect(url_for("form2"))
 
-            msg = Message(
-                "Password Reset Request",
-                recipients=[email]
-            )
-            msg.body = (
-                "Hi,\n\n"
-                "We received a request to reset your password.\n\n"
-                "Use this link within 15 minutes:\n"
-                f"{reset_link}\n\n"
-                "If you didn't request this, ignore this email."
-            )
-            msg.html = f"""
-                <html>
-                    <body style="font-family: Arial, sans-serif; color: #1f2937;">
-                        <p>Hi,</p>
-                        <p>We received a request to reset your password.</p>
-                        <p>This link is valid for 15 minutes.</p>
-                        <p style="margin: 24px 0;">
-                            <a
-                                href="{reset_link}"
-                                style="
-                                    display: inline-block;
-                                    padding: 12px 24px;
-                                    background-color: #1d4ed8;
-                                    color: #ffffff;
-                                    text-decoration: none;
-                                    border-radius: 4px;
-                                    border: 1px solid #1e40af;
-                                    font-weight: bold;
-                                "
-                            >
-                                Reset Password
-                            </a>
-                        </p>
-                        <p style="font-size: 14px; color: #4b5563;">
-                            If the button does not work, paste this link in your browser:
-                            <br>
-                            <a href="{reset_link}" style="color: #1d4ed8;">{reset_link}</a>
-                        </p>
-                        <p>If you didn't request this, ignore this email.</p>
-                    </body>
-                </html>
-            """
-
             cursor.execute(
                 "UPDATE users SET reset_token=%s WHERE email=%s",
                 (token, email)
@@ -299,8 +383,8 @@ def form2():
             conn.commit()
 
             try:
-                mail.send(msg)
-            except (SMTPException, OSError):
+                send_reset_email(email, reset_link)
+            except Exception:
                 app.logger.exception("Failed to send reset email to %s", email)
                 try:
                     cursor.execute(
@@ -322,6 +406,8 @@ def form2():
         return redirect(url_for("form2"))
 
     section = request.args.get("next", "register")
+    if section not in {"register", "login", "forgot"}:
+        section = "register"
     return render_template("form2.html", section=section)
 
 # ----------------- DASHBOARD -----------------
@@ -346,8 +432,10 @@ def reset(token):
         flash("Invalid or expired token", "danger")
         return redirect(url_for("form2"))
 
-    conn = db.engine.raw_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    conn, cursor = open_db_connection()
+    if not conn:
+        flash("Database is temporarily unavailable. Please try again shortly.", "danger")
+        return redirect(url_for("form2"))
 
     cursor.execute(
         "SELECT * FROM users WHERE email=%s AND reset_token=%s",
@@ -362,7 +450,21 @@ def reset(token):
         return redirect(url_for("form2"))
 
     if request.method == "POST":
-        password = request.form["password"]
+        password = request.form.get("password", "").strip()
+        confirm_password = request.form.get("confirmPassword", "").strip()
+
+        if not password or not confirm_password:
+            flash("Both password fields are required.", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(request.url)
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(request.url)
+
         hashed = bcrypt.generate_password_hash(password).decode("utf-8")
 
         cursor.execute(

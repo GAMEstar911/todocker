@@ -1,7 +1,8 @@
+const authForm = document.querySelector("form");
 const passwordInput = document.getElementById("password");
-    const confirmPasswordInput = document.getElementById("confirmPassword");
-    const passwordMessage = document.getElementById("password-message");
-    const errorElement = document.getElementById("passwordError");
+const confirmPasswordInput = document.getElementById("confirmPassword");
+const passwordMessage = document.getElementById("password-message");
+const errorElement = document.getElementById("passwordError");
 
     // SHOW SECTION LOGIC
     function showSection(section) {
@@ -69,7 +70,7 @@ const passwordInput = document.getElementById("password");
             errorElement.classList.add("success");
         }
     }
-    document.querySelector("form").addEventListener("submit", function(e) {
+    authForm.addEventListener("submit", function(e) {
     if (document.getElementById("password").value !== document.getElementById("confirmPassword").value &&
         document.getElementById("formAction").value === "register") {
         e.preventDefault();
@@ -88,7 +89,7 @@ const passwordInput = document.getElementById("password");
     });
 
     // INITIALIZE SECTION
-    window.onload = () => {
-        const initialSection = "{{ section or 'register' }}";
-        showSection(initialSection);
-    };
+window.onload = () => {
+    const initialSection = authForm.dataset.initialSection || "register";
+    showSection(initialSection);
+};

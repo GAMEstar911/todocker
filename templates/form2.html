@@ -9,7 +9,7 @@
 <body>
 
     <div class="box">
-        <form method="POST" action="/">
+        <form method="POST" action="/" data-initial-section="{{ section }}">
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
