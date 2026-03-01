@@ -28,17 +28,18 @@ class LogisticsRunner:
         normalized_dataset[numerical_features] = (dataset[numerical_features] - feature_mean) / feature_std
         
         # Convert target column to binary (0/1)
-        # Assumes the target column has two unique values
-        unique_values = normalized_dataset[self.target_column].unique()
-        if len(unique_values) != 2:
-            raise ValueError(f"The target column '{self.target_column}' must have exactly two unique classes for logistic regression, but it has {len(unique_values)}.")
-        
-        # Automatically assign the first unique value to 0 and the second to 1
-        self.target_map = {unique_values[0]: 0, unique_values[1]: 1}
-        normalized_dataset['target_binary'] = normalized_dataset[self.target_column].map(self.target_map)
+        target_series = normalized_dataset[self.target_column]
+
+        # Validate the target column for binary classification
+        if target_series.nunique() != 2:
+            raise ValueError(f"The target column '{self.target_column}' is not suitable for logistic regression. It must have exactly 2 unique classes, but it has {target_series.nunique()}. Please use a dataset with a binary target variable (e.g., Yes/No, 0/1).")
+
+        # Convert target variable to 0 and 1
+        factorized_labels, unique_values = pd.factorize(target_series)
+        self.target_map = {unique_values[i]: i for i in range(len(unique_values))}
 
         features = normalized_dataset[self.feature_columns]
-        labels = normalized_dataset["target_binary"]
+        labels = factorized_labels
 
         # Using sklearn's train_test_split for simplicity
         X_train, X_test, y_train, y_test = train_test_split(
