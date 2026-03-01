@@ -7,10 +7,12 @@ from urllib import error as urllib_error
 from urllib import request as urllib_request
 pymysql.install_as_MySQLdb()
 
+import pandas as pd
+from logistics_runner import LogisticsRunner
 from flask import (
     Flask, render_template,
     request, redirect,
-    url_for, flash
+    url_for, flash, jsonify
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -494,7 +496,7 @@ def form2():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return f"Welcome {current_user.name}! <br><a href='/logout'>Logout</a>"
+    return render_template("dashboard.html")
 
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
@@ -561,6 +563,40 @@ def reset(token):
     cursor.close()
     conn.close()
     return render_template("reset.html")
+
+
+# ----------------- ANALYSIS ROUTE -----------------
+@app.route("/analyze", methods=["POST"])
+@login_required
+def analyze():
+    if 'dataset' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['dataset']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if file and file.filename.endswith('.csv'):
+        try:
+            df = pd.read_csv(file)
+            
+            # Initialize and run the logistics pipeline
+            runner = LogisticsRunner(data=df)
+            results = runner.run_experiment()
+
+            # Clean up results for JSON serialization
+            if 'training_history' in results:
+                for key, value in results['training_history'].items():
+                    results['training_history'][key] = [float(v) for v in value]
+
+            return jsonify(results)
+
+        except Exception as e:
+            app.logger.error(f"Analysis failed: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"error": "Invalid file type. Please upload a CSV."}), 400
+
 
 # ----------------- RUN -----------------
 if __name__ == "__main__":
