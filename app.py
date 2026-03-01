@@ -137,6 +137,15 @@ app.config["REMEMBER_COOKIE_SECURE"] = env_bool("REMEMBER_COOKIE_SECURE", defaul
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+# Add security headers to prevent caching
+@app.after_request
+def add_security_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 login_manager = LoginManager(app)
 login_manager.login_view = "form2"
 
@@ -567,8 +576,9 @@ def reset(token):
 
 # ----------------- ANALYSIS ROUTE -----------------
 @app.route("/analyze", methods=["POST"])
-@login_required
-def analyze():
+
+def analyze(func):
+    func=login_required
     if 'dataset' not in request.files:
         return jsonify({"error": "No file part"}), 400
     
