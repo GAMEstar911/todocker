@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-import keras
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 class LogisticsRunner:
@@ -53,60 +54,22 @@ class LogisticsRunner:
             "test_labels": y_test,
         }
 
-    @staticmethod
-    def create_model(input_features: list[str], learning_rate: float) -> keras.Model:
-        model_inputs = [
-            keras.Input(name=feature_name, shape=(1,))
-            for feature_name in input_features
-        ]
-        concatenated_inputs = keras.layers.Concatenate()(model_inputs)
-        model_output = keras.layers.Dense(
-            units=1,
-            name="dense_layer",
-            activation=keras.activations.sigmoid,
-        )(concatenated_inputs)
-
-        model = keras.Model(inputs=model_inputs, outputs=model_output)
-        model.compile(
-            optimizer=keras.optimizers.RMSprop(learning_rate),
-            loss=keras.losses.BinaryCrossentropy(),
-            metrics=['accuracy'],
-        )
-        return model
-
     def run_experiment(self) -> dict:
         processed_data = self.preprocess_data()
         split_data = self.split_data(processed_data)
 
-        # These settings can be exposed to the user in the future
-        learning_rate=0.001
-        number_epochs=60
-        batch_size=100
-
-        model = self.create_model(self.feature_columns, learning_rate)
-
-        train_features_dict = {col: np.array(split_data["train_features"][col]) for col in self.feature_columns}
-
-        history = model.fit(
-            x=train_features_dict,
-            y=split_data["train_labels"],
-            batch_size=batch_size,
-            epochs=number_epochs,
-            validation_split=0.2, # Using a portion of training data for validation
-            verbose=0 # Suppress verbose output
-        )
-
-        test_features_dict = {col: np.array(split_data["test_features"][col]) for col in self.feature_columns}
+        # Use Scikit-learn's Logistic Regression
+        model = LogisticRegression(random_state=self.random_state, max_iter=1000)
         
-        test_loss, test_accuracy = model.evaluate(
-            test_features_dict,
-            split_data["test_labels"],
-            verbose=0
-        )
+        # Train the model
+        model.fit(split_data["train_features"], split_data["train_labels"])
+
+        # Make predictions and calculate accuracy
+        y_pred = model.predict(split_data["test_features"])
+        test_accuracy = accuracy_score(split_data["test_labels"], y_pred)
 
         return {
             "test_accuracy": test_accuracy,
-            "training_history": history.history,
             "target_map": self.target_map,
             "feature_columns": self.feature_columns
         }
