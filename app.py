@@ -576,9 +576,8 @@ def reset(token):
 
 # ----------------- ANALYSIS ROUTE -----------------
 @app.route("/analyze", methods=["POST"])
-
-def analyze(func):
-    func=login_required
+@login_required
+def analyze():
     if 'dataset' not in request.files:
         return jsonify({"error": "No file part"}), 400
     
