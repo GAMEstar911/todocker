@@ -471,7 +471,7 @@ def form2():
 
             try:
                 send_reset_email(email, reset_link)
-            except Exception:
+            except Exception as e:
                 app.logger.exception(
                     "Failed to send reset email to %s via %s",
                     email,
@@ -485,7 +485,9 @@ def form2():
                     conn.commit()
                 except Exception:
                     app.logger.exception("Failed to clear reset token for %s after mail error", email)
-                flash("Could not send reset email. Please try again shortly.", "danger")
+                
+                # Provide a more specific error message to the user
+                flash(f"Could not send reset email. The mail server reported an error: {e}", "danger")
                 cursor.close()
                 conn.close()
                 return redirect(url_for("form2"))
