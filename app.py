@@ -441,17 +441,11 @@ def form2():
             user = cursor.fetchone()
 
             if user and bcrypt.check_password_hash(user["password_hash"], password):
-                login_user(
-                    User(
-                        user["id"],
-                        user["email"],
-                        user["password_hash"],
-                        user["full_name"]
-                    )
-                )
+                user_obj = User.query.filter_by(email=email).first()
+                login_user(user_obj)
                 cursor.close()
                 conn.close()
-                flash(f"Welcome, {user['full_name']}!", "success")
+                flash(f"Welcome, {user_obj.full_name}!", "success")
                 return redirect(url_for("dashboard"))
 
             flash("Invalid credentials", "danger")
