@@ -13,8 +13,8 @@ body {
 /* Sidebar Styles */
 .sidebar {
     width: 240px;
-    background-color: #ffffff;
-    border-right: 1px solid #e0e0e0;
+    background-color: #28292d; /* Matched from form background */
+    border-right: 1px solid #444;
     height: 100vh;
     position: fixed;
     top: 0;
@@ -25,7 +25,7 @@ body {
 .sidebar-header h3 {
     margin: 0 0 2rem 0;
     font-size: 1.5rem;
-    color: #1a1a1a;
+    color: #ffffff; /* Changed for dark background */
 }
 
 .sidebar ul {
@@ -38,19 +38,21 @@ body {
     display: block;
     padding: 0.75rem 1rem;
     text-decoration: none;
-    color: #495057;
+    color: #adb5bd; /* Lightened for dark background */
     border-radius: 6px;
     margin-bottom: 0.5rem;
     font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .sidebar ul li a:hover {
-    background-color: #f1f3f5;
+    background-color: #343a40;
+    color: #ffffff;
 }
 
 .sidebar ul li a.active {
-    background-color: #e9ecef;
-    color: #000;
+    background-color: #007bff; /* Using primary blue for active state */
+    color: #ffffff;
 }
 
 /* Main Content Styles */
