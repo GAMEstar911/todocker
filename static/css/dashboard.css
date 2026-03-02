@@ -13,7 +13,7 @@ body {
 /* Sidebar Styles */
 .sidebar {
     width: 240px;
-    background-color: #28292d; /* Matched from form background */
+    background: linear-gradient(45deg, #0f172a, #1e1b4b, #581c87, #1e1b4b); /* Matched from form background */
     border-right: 1px solid #444;
     height: 100vh;
     position: fixed;
@@ -90,6 +90,21 @@ header h1 {
 .logout-button:hover {
     background-color: #0056b3;
 }
+.submit-button {
+    background-color: #007bff;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+    background-color: #0056b3;
+}
+
+
 
 /* Container for analysis and data preview */
 .container {
