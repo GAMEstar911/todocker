@@ -65,7 +65,7 @@ body {
 
 /* Sidebar Styles */
 .sidebar {
-    width: 240px;
+    width: 235px;
     background: var(--sidebar-bg-gradient);
     border-right: 1px solid var(--sidebar-border);
     height: 100vh;
