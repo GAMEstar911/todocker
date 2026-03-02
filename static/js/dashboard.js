@@ -1,18 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     const analysisForm = document.getElementById('analysis-form');
-    const loader = document.getElementById('loader');
-    const resultsDiv = document.getElementById('results');
-    const accuracySpan = document.getElementById('accuracy');
-    const dataTableContainer = document.getElementById('data-table-container');
-    const cmContainer = document.getElementById('confusion-matrix-chart');
-    let chart; // To hold the chart instance
-
     if (analysisForm) {
         analysisForm.addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const form = event.target;
             const formData = new FormData(form);
+            const loader = document.getElementById('loader');
+            const resultsDiv = document.getElementById('results');
+            const accuracySpan = document.getElementById('accuracy');
+            const chartContainer = document.getElementById('training-chart');
+            const dataTableContainer = document.getElementById('data-table-container');
+            let chart = Chart.getChart(chartContainer); // Get existing chart instance
 
             // If a chart instance exists, destroy it before creating a new one
             if (chart) {
@@ -40,11 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Error: ' + results.error);
                 } else {
                     accuracySpan.textContent = (results.test_accuracy * 100).toFixed(2) + '%';
-
-                    // Render the confusion matrix
-                    if (results.confusion_matrix && results.class_labels) {
-                        renderConfusionMatrix(results.confusion_matrix, results.class_labels);
-                    }
                     
                     // Render the data table
                     if (results.data_preview && results.data_preview.length > 0) {
@@ -86,72 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('An unexpected error occurred: ' + error.message);
             } finally {
                 loader.style.display = 'none';
-            }
-        });
-    }
-
-    function renderConfusionMatrix(matrix, labels) {
-        const data = {
-            labels: labels,
-            datasets: []
-        };
-
-        // Create a dataset for each row of the matrix
-        matrix.forEach((row, i) => {
-            const dataset = {
-                label: labels[i],
-                data: row,
-                backgroundColor: `rgba(75, 192, 192, ${0.2 + (i / labels.length) * 0.6})`,
-                borderColor: 'white',
-                borderWidth: 1
-            };
-            data.datasets.push(dataset);
-        });
-
-        const ctx = cmContainer.getContext('2d');
-        chart = new Chart(ctx, {
-            type: 'bar', // Using bar chart to create a heatmap-like matrix
-            data: data,
-            options: {
-                indexAxis: 'y',
-                scales: {
-                    x: {
-                        stacked: true,
-                        ticks: {
-                            beginAtZero: true
-                        },
-                        title: {
-                            display: true,
-                            text: 'Predicted'
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        title: {
-                            display: true,
-                            text: 'Actual'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.x !== null) {
-                                    label += context.parsed.x;
-                                }
-                                return `Predicted ${context.label}: ${context.raw}`;
-                            }
-                        }
-                    }
-                }
             }
         });
     }
