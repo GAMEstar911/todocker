@@ -509,6 +509,13 @@ def form2():
 def dashboard():
     return render_template("dashboard.html", current_user=current_user)
 
+
+@app.route("/api-keys")
+@login_required
+def api_keys():
+    return render_template("api_keys.html", current_user=current_user)
+
+
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
 @login_required
