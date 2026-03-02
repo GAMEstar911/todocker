@@ -28,9 +28,8 @@ const errorElement = document.getElementById("passwordError");
         });
     });
 
-    // Toggle nav link visibility
-    document.getElementById("btnGoLogin").style.display = (section === 'register') ? "block" : "none";
-    document.getElementById("btnGoRegister").style.display = (section !== 'register') ? "block" : "none";
+    // Toggle footer visibility
+    document.getElementById("registerFooter").style.display = (section === 'register') ? "block" : "none";
 }
 
     // PASSWORD STRENGTH VALIDATION

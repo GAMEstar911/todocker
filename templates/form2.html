@@ -61,6 +61,10 @@
                     <input type="password" name="password" placeholder="••••••••" autocomplete="off"/>
                 </div>
                 <input type="submit" value="Login">
+                <div class="form-footer">
+                    <p>Need an account? <a href="#" onclick="showSection('register'); return false;">Register</a></p>
+                    <a href="#" class="forgot-password" onclick="showSection('forgot'); return false;">Forgot Password?</a>
+                </div>
             </div>
 
             <div id="forgotSection" style="display:none;">
@@ -71,12 +75,13 @@
                     <input type="email" name="email" placeholder="email@example.com" />
                 </div>
                 <input type="submit" value="Send Link">
+                <div class="form-footer">
+                    <p>Remembered your password? <a href="#" onclick="showSection('login'); return false;">Login</a></p>
+                </div>
             </div>
 
-            <div class="nav-container">
-                <button type="button" class="nav-link" id="btnGoLogin" onclick="showSection('login')">Already have an account? Login</button>
-                <button type="button" class="nav-link" id="btnGoRegister" onclick="showSection('register')" style="display:none;">Need an account? Register</button>
-                <button type="button" class="nav-link" onclick="showSection('forgot')">Forgot Password?</button>
+            <div class="nav-container" id="registerFooter">
+                 <p>Already have an account? <a href="#" onclick="showSection('login'); return false;">Login</a></p>
             </div>
         </form>
     </div>
