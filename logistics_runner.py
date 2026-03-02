@@ -1,11 +1,16 @@
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
 
 class LogisticsRunner:
     def __init__(self, data: pd.DataFrame, random_state: int = 100):
+        # Enforce a row limit to prevent memory issues
+        if len(data) > 50000:
+            data = data.head(50000)
+            
         self.data = data
         self.random_state = random_state
         self.target_column = data.columns[-1]
@@ -15,8 +20,13 @@ class LogisticsRunner:
         # Keep only feature columns and the target column
         self.data = self.data[self.feature_columns + [self.target_column]]
 
+        # Impute missing values for numeric features
+        if self.data[self.feature_columns].isnull().any().any():
+            imputer = SimpleImputer(strategy='mean')
+            self.data[self.feature_columns] = imputer.fit_transform(self.data[self.feature_columns])
+
         if self.data.isnull().any().any():
-            raise ValueError("Dataset contains missing values. Please clean the data before uploading.")
+            raise ValueError("Dataset contains missing values in the target column. Please clean the data before uploading.")
 
         return self.data
 
@@ -28,12 +38,16 @@ class LogisticsRunner:
         normalized_dataset = dataset.copy()
         normalized_dataset[numerical_features] = (dataset[numerical_features] - feature_mean) / feature_std
         
-        # Convert target column to binary (0/1)
+        # Convert target column
         target_series = normalized_dataset[self.target_column]
 
-        # Convert target variable to 0 and 1
+        # Check if the target variable looks like a regression problem
+        if target_series.nunique() / len(target_series) > 0.5:
+            raise ValueError(f"The target column '{self.target_column}' has too many unique values and appears to be a regression problem, not a classification problem. This tool is for classification tasks only.")
+
+        # Convert target variable to numerical classes
         factorized_labels, unique_values = pd.factorize(target_series)
-        self.target_map = {unique_values[i]: i for i in range(len(unique_values))}
+        self.class_labels = list(unique_values)
 
         features = normalized_dataset[self.feature_columns]
         labels = factorized_labels
@@ -64,8 +78,12 @@ class LogisticsRunner:
         y_pred = model.predict(split_data["test_features"])
         test_accuracy = accuracy_score(split_data["test_labels"], y_pred)
 
+        # Generate the confusion matrix
+        cm = confusion_matrix(split_data["test_labels"], y_pred)
+
         return {
             "test_accuracy": test_accuracy,
-            "target_map": self.target_map,
-            "feature_columns": self.feature_columns
+            "feature_columns": self.feature_columns,
+            "confusion_matrix": cm.tolist(),
+            "class_labels": self.class_labels
         }

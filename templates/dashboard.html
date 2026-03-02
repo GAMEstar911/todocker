@@ -27,19 +27,21 @@
             </div>
 
             <div id="results">
-                <h2>Analysis Results</h2>
-                <p><strong>Model Test Accuracy:</strong> <span id="accuracy"></span></p>
-                <canvas id="training-chart"></canvas>
+                    <h2>Analysis Results</h2>
+                    <p><strong>Model Test Accuracy:</strong> <span id="accuracy"></span></p>
+                    <div id="confusion-matrix-container">
+                        <canvas id="confusion-matrix-chart"></canvas>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="data-preview">
-            <h2>Data Preview</h2>
-            <div id="data-table-container">
-                <p>Your data will appear here after analysis.</p>
+            <div class="data-preview">
+                <h2>Data Preview</h2>
+                <div id="data-table-container">
+                    <p>Your data will appear here after analysis.</p>
+                </div>
             </div>
         </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
