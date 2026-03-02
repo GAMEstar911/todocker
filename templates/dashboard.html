@@ -10,22 +10,35 @@
 <body>
     <a href="/logout" class="logout">Logout</a>
     <h1>Welcome, {{ current_user.name }}!</h1>
-    <h2>Analyze Your Dataset</h2>
-    <p>Upload a CSV file to train a logistic regression model. The last column will be treated as the target variable for prediction.</p>
 
-    <form id="analysis-form" enctype="multipart/form-data">
-        <input type="file" id="dataset" name="dataset" accept=".csv" required>
-        <button type="submit">Analyze</button>
-    </form>
+    <div class="container">
+        <div class="main-content">
+            <h2>Analyze Your Dataset</h2>
+            <p>Upload a CSV file to train a logistic regression model. The last column will be treated as the target variable for prediction.</p>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <p>Training model... This may take a moment.</p>
-    </div>
+            <form id="analysis-form" enctype="multipart/form-data">
+                <input type="file" id="dataset" name="dataset" accept=".csv" required>
+                <button type="submit">Analyze</button>
+            </form>
 
-    <div id="results">
-        <h2>Analysis Results</h2>
-        <p><strong>Model Test Accuracy:</strong> <span id="accuracy"></span></p>
+            <div id="loader">
+                <div class="spinner"></div>
+                <p>Training model... This may take a moment.</p>
+            </div>
+
+            <div id="results">
+                <h2>Analysis Results</h2>
+                <p><strong>Model Test Accuracy:</strong> <span id="accuracy"></span></p>
+                <canvas id="training-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="data-preview">
+            <h2>Data Preview</h2>
+            <div id="data-table-container">
+                <p>Your data will appear here after analysis.</p>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

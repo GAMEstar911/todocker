@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const loader = document.getElementById('loader');
             const resultsDiv = document.getElementById('results');
             const accuracySpan = document.getElementById('accuracy');
-            const chartContainer = document.getElementById('accuracyChart');
+            const chartContainer = document.getElementById('training-chart');
+            const dataTableContainer = document.getElementById('data-table-container');
             let chart = Chart.getChart(chartContainer); // Get existing chart instance
 
             // If a chart instance exists, destroy it before creating a new one
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loader.style.display = 'block';
             resultsDiv.style.display = 'none';
+            dataTableContainer.innerHTML = '<p>Your data will appear here after analysis.</p>'; // Reset
 
             try {
                 const response = await fetch('/analyze', {
@@ -62,6 +64,39 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
                     });
+
+                    // Render the data table
+                    if (results.data_preview && results.data_preview.length > 0) {
+                        const table = document.createElement('table');
+                        const thead = document.createElement('thead');
+                        const tbody = document.createElement('tbody');
+                        
+                        // Create header row
+                        const headerRow = document.createElement('tr');
+                        Object.keys(results.data_preview[0]).forEach(key => {
+                            const th = document.createElement('th');
+                            th.textContent = key;
+                            headerRow.appendChild(th);
+                        });
+                        thead.appendChild(headerRow);
+
+                        // Create body rows
+                        results.data_preview.forEach(rowData => {
+                            const row = document.createElement('tr');
+                            Object.values(rowData).forEach(value => {
+                                const td = document.createElement('td');
+                                td.textContent = value;
+                                row.appendChild(td);
+                            });
+                            tbody.appendChild(row);
+                        });
+
+                        table.appendChild(thead);
+                        table.appendChild(tbody);
+                        
+                        dataTableContainer.innerHTML = ''; // Clear placeholder
+                        dataTableContainer.appendChild(table);
+                    }
 
                     resultsDiv.style.display = 'block';
                 } else {

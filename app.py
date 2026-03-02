@@ -591,9 +591,14 @@ def analyze():
         try:
             df = pd.read_csv(file)
             
+            # Prepare a preview of the dataframe for the frontend
+            # Convert to a dictionary for JSON serialization
+            data_preview = df.head(100).to_dict(orient='records')
+
             # Initialize and run the logistics pipeline
             runner = LogisticsRunner(data=df)
             results = runner.run_experiment()
+            results['data_preview'] = data_preview
 
             # Clean up results for JSON serialization
             if 'training_history' in results:
