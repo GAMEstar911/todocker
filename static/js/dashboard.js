@@ -40,40 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     accuracySpan.textContent = (results.test_accuracy * 100).toFixed(2) + '%';
                     
-                    // Render the new chart, only if history is available
-                    if (results.training_history) {
-                        const ctx = chartContainer.getContext('2d');
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: Array.from({length: results.training_history.accuracy.length}, (_, i) => i + 1),
-                                datasets: [{
-                                    label: 'Training Accuracy',
-                                    data: results.training_history.accuracy,
-                                    borderColor: 'rgb(75, 192, 192)',
-                                    tension: 0.1
-                                },
-                                {
-                                    label: 'Validation Accuracy',
-                                    data: results.training_history.val_accuracy,
-                                    borderColor: 'rgb(255, 99, 132)',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        title: { display: true, text: 'Accuracy' }
-                                    },
-                                    x: {
-                                        title: { display: true, text: 'Epoch' }
-                                    }
-                                }
-                            }
-                        });
-                    }
-
                     // Render the data table
                     if (results.data_preview && results.data_preview.length > 0) {
                         const table = document.createElement('table');
