@@ -19,11 +19,15 @@
                 <li><a href="#">Domains</a></li>
                 <li><a href="#">Mail History</a></li>
             </ul>
+            <div class="theme-switcher">
+                <label for="theme-toggle">Dark Mode</label>
+                <input type="checkbox" id="theme-toggle">
+            </div>
         </nav>
 
         <div class="main-app-content">
             <header>
-                <h1>Welcome, {{ current_user.name }}!</h1>
+                <h1>Welcome, {{ current_user.username }}!</h1>
                 <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
             </header>
 

@@ -1,9 +1,64 @@
+:root {
+    --body-bg: #f4f7f9;
+    --main-content-bg: #ffffff;
+    --sidebar-bg: #28292d;
+    --sidebar-border: #444;
+    --header-border: #dee2e6;
+    --text-color: #333;
+    --text-color-light: #495057;
+    --sidebar-text-color: #adb5bd;
+    --sidebar-header-color: #ffffff;
+    --sidebar-link-hover-bg: #343a40;
+    --sidebar-link-hover-text: #ffffff;
+    --sidebar-link-active-bg: #007bff;
+    --sidebar-link-active-text: #ffffff;
+    --button-bg: #007bff;
+    --button-text: #ffffff;
+    --button-hover-bg: #0056b3;
+    --results-bg: #f8f9fa;
+    --results-border: #e9ecef;
+    --data-preview-bg: #f9f9f9;
+    --data-preview-border: #ddd;
+    --table-header-bg: #e9ecef;
+    --table-row-even-bg: #f8f9fa;
+    --table-border-color: #ddd;
+    --box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.dark-mode {
+    --body-bg: #1a1a1a;
+    --main-content-bg: #2c2c2c;
+    --sidebar-bg: #1f1f1f;
+    --sidebar-border: #333;
+    --header-border: #333;
+    --text-color: #e0e0e0;
+    --text-color-light: #adb5bd;
+    --sidebar-text-color: #adb5bd;
+    --sidebar-header-color: #ffffff;
+    --sidebar-link-hover-bg: #343a40;
+    --sidebar-link-hover-text: #ffffff;
+    --sidebar-link-active-bg: #007bff;
+    --sidebar-link-active-text: #ffffff;
+    --button-bg: #007bff;
+    --button-text: #ffffff;
+    --button-hover-bg: #0056b3;
+    --results-bg: #333;
+    --results-border: #444;
+    --data-preview-bg: #252525;
+    --data-preview-border: #444;
+    --table-header-bg: #3a3a3a;
+    --table-row-even-bg: #303030;
+    --table-border-color: #444;
+    --box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 /* General Body Styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f4f7f9;
+    background-color: var(--body-bg);
     margin: 0;
-    color: #333;
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .dashboard-layout {
@@ -13,19 +68,20 @@ body {
 /* Sidebar Styles */
 .sidebar {
     width: 240px;
-    background: linear-gradient(45deg, #0f172a, #1e1b4b, #581c87, #1e1b4b); /* Matched from form background */
-    border-right: 1px solid #444;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
     height: 100vh;
     position: fixed;
     top: 0;
     left: 0;
     padding: 1rem;
+    transition: background-color 0.3s;
 }
 
 .sidebar-header h3 {
     margin: 0 0 2rem 0;
     font-size: 1.5rem;
-    color: #ffffff; /* Changed for dark background */
+    color: var(--sidebar-header-color);
 }
 
 .sidebar ul {
@@ -38,7 +94,7 @@ body {
     display: block;
     padding: 0.75rem 1rem;
     text-decoration: none;
-    color: #adb5bd; /* Lightened for dark background */
+    color: var(--sidebar-text-color);
     border-radius: 6px;
     margin-bottom: 0.5rem;
     font-weight: 500;
@@ -46,13 +102,13 @@ body {
 }
 
 .sidebar ul li a:hover {
-    background-color: #343a40;
-    color: #ffffff;
+    background-color: var(--sidebar-link-hover-bg);
+    color: var(--sidebar-link-hover-text);
 }
 
 .sidebar ul li a.active {
-    background-color: #007bff; /* Using primary blue for active state */
-    color: #ffffff;
+    background-color: var(--sidebar-link-active-bg);
+    color: var(--sidebar-link-active-text);
 }
 
 /* Main Content Styles */
@@ -69,7 +125,7 @@ header {
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--header-border);
 }
 
 header h1 {
@@ -78,8 +134,8 @@ header h1 {
 }
 
 .logout-button {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--button-bg);
+    color: var(--button-text);
     padding: 0.6rem 1.2rem;
     text-decoration: none;
     border-radius: 6px;
@@ -88,32 +144,18 @@ header h1 {
 }
 
 .logout-button:hover {
-    background-color: #0056b3;
+    background-color: var(--button-hover-bg);
 }
-.submit-button {
-    background-color: #007bff;
-    color: white;
-    padding: 0.6rem 1.2rem;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.submit-button:hover {
-    background-color: #0056b3;
-}
-
-
 
 /* Container for analysis and data preview */
 .container {
     display: flex;
     gap: 2rem;
-    background-color: #ffffff;
+    background-color: var(--main-content-bg);
     padding: 2rem;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: var(--box-shadow);
+    transition: background-color 0.3s;
 }
 
 .main-content {
@@ -122,10 +164,11 @@ header h1 {
 
 .data-preview {
     flex: 1;
-    background: #f9f9f9;
+    background: var(--data-preview-bg);
     padding: 1rem 2rem;
     border-radius: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--data-preview-border);
+    transition: background-color 0.3s;
 }
 
 /* Form and Results */
@@ -134,8 +177,8 @@ form {
 }
 
 form button[type="submit"] {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--button-bg);
+    color: var(--button-text);
     padding: 0.6rem 1.2rem;
     border: none;
     border-radius: 6px;
@@ -145,15 +188,16 @@ form button[type="submit"] {
 }
 
 form button[type="submit"]:hover {
-    background-color: #0056b3;
+    background-color: var(--button-hover-bg);
 }
 
 #results {
     display: none;
-    background-color: #f8f9fa;
+    background-color: var(--results-bg);
     padding: 1.5rem;
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--results-border);
+    transition: background-color 0.3s;
 }
 
 /* Loader */
@@ -191,19 +235,19 @@ table {
 }
 
 th, td {
-    border: 1px solid #ddd;
+    border: 1px solid var(--table-border-color);
     padding: 8px 12px;
     text-align: left;
     font-size: 0.9rem;
 }
 
 th {
-    background-color: #e9ecef;
+    background-color: var(--table-header-bg);
     font-weight: 600;
 }
 
 tr:nth-child(even) {
-    background-color: #f8f9fa;
+    background-color: var(--table-row-even-bg);
 }
 
 /* Confusion Matrix Chart */
