@@ -507,7 +507,7 @@ def form2():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", current_user=current_user)
 
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
