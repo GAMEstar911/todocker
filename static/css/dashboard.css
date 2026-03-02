@@ -133,6 +133,21 @@ form {
     margin-bottom: 2rem;
 }
 
+form button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+form button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
 #results {
     display: none;
     background-color: #f8f9fa;
