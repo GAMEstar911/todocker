@@ -108,7 +108,7 @@
         
         #passwordError { font-size: 0.8rem; display: block; margin-top: 5px; }
         .error { color: #ff4d4d; }
-        .success { color: #0a4102; }
+        .success { color: #00ff88; }
 
         input[type="submit"] {
             margin-top: 10px;
@@ -131,6 +131,6 @@
 
         /* Flash messages styling */
         .flash { padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; }
-        .flash-success { background: rgba(3, 37, 21, 0.1); border: 1px solid #023005; color: #023005; }
+        .flash-success { background: rgba(3, 37, 21, 0.1); border: 1px solid #00ff88; color: #00ff88; }
         .flash-danger { background: rgba(255, 77, 77, 0.1); border: 1px solid #ff0000; color: #ff0000; }
         .flash-warning { background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; color: #ffcc00; }
