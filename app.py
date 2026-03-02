@@ -21,7 +21,9 @@ from flask_login import (
     login_user, logout_user,
     login_required, current_user
 )
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+import secrets
+from datetime import datetime
+
 from dotenv import load_dotenv
 
 # ----------------- LOAD ENV -----------------
@@ -324,34 +326,52 @@ def open_db_connection():
         return None, None
 
 # ----------------- USER MODEL -----------------
-class User(UserMixin):
-    def __init__(self, id, email, password, name):
-        self.id = id
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    reset_token = db.Column(db.String(100), unique=True, nullable=True)
+    keys = db.relationship('APIKey', backref='user', lazy=True, cascade="all, delete-orphan")
+
+    def __init__(self, full_name, email, password_hash):
+        self.full_name = full_name
         self.email = email
-        self.password = password
-        self.name = name
-        self.full_name = name
+        self.password_hash = password_hash
+
+    def get_id(self):
+        return self.id
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+
+class APIKey(db.Model):
+    __tablename__ = 'api_keys'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.key = secrets.token_hex(32)
+
 
 @login_manager.user_loader
 def load_user(user_id):
-    conn, cursor = open_db_connection()
-    if not conn:
-        return None
-
-    cursor.execute("SELECT * FROM users WHERE id=%s", (user_id,))
-    user = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    if user:
-        return User(
-            user["id"],
-            user["email"],
-            user["password_hash"],
-            user["full_name"]
-        )
-    return None
+    return User.query.get(int(user_id))
 
 # ----------------- SINGLE FORM ROUTE -----------------
 @app.route("/", methods=["GET", "POST"])
@@ -510,10 +530,18 @@ def dashboard():
     return render_template("dashboard.html", current_user=current_user)
 
 
-@app.route("/api-keys")
+@app.route("/api-keys", methods=["GET", "POST"])
 @login_required
 def api_keys():
-    return render_template("api_keys.html", current_user=current_user)
+    if request.method == "POST":
+        new_key = APIKey(user_id=current_user.id)
+        db.session.add(new_key)
+        db.session.commit()
+        flash(f"New API Key generated: {new_key.key}", "success")
+        return redirect(url_for("api_keys"))
+
+    keys = APIKey.query.filter_by(user_id=current_user.id).order_by(APIKey.created_at.desc()).all()
+    return render_template("api_keys.html", current_user=current_user, keys=keys)
 
 
 # ----------------- LOGOUT -----------------
