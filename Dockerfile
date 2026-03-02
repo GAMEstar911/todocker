@@ -1,13 +1,17 @@
-FROM python:3.13-slim
+FROM python:3.12
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Copy only the requirements file first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
+# Install dependencies with a long timeout and retries to handle unstable networks
+RUN pip install --default-timeout=100 --retries 5 --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
 COPY . .
 
 RUN useradd --create-home --shell /usr/sbin/nologin appuser \
