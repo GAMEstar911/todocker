@@ -43,13 +43,20 @@ class LogisticsRunner:
         labels = factorized_labels
 
         # Using sklearn's train_test_split for simplicity
-        X_train, X_test, y_train, y_test = train_test_split(
+        X_train_full, X_test, y_train_full, y_test = train_test_split(
             features, labels, test_size=0.2, random_state=self.random_state
         )
         
+        # Split the training data into a smaller training set and a validation set
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_train_full, y_train_full, test_size=0.25, random_state=self.random_state
+        )
+
         return {
             "train_features": X_train,
             "train_labels": y_train,
+            "val_features": X_val,
+            "val_labels": y_val,
             "test_features": X_test,
             "test_labels": y_test,
         }
@@ -58,18 +65,36 @@ class LogisticsRunner:
         processed_data = self.preprocess_data()
         split_data = self.split_data(processed_data)
 
-        # Use Scikit-learn's Logistic Regression
-        model = LogisticRegression(random_state=self.random_state, max_iter=1000)
+        # Use Scikit-learn's Logistic Regression with warm_start to simulate epochs
+        model = LogisticRegression(random_state=self.random_state, warm_start=True, solver='liblinear', max_iter=1)
         
-        # Train the model
-        model.fit(split_data["train_features"], split_data["train_labels"])
+        training_accuracy = []
+        validation_accuracy = []
+        n_epochs = 30  # Number of training epochs
 
-        # Make predictions and calculate accuracy
+        for _ in range(n_epochs):
+            model.fit(split_data["train_features"], split_data["train_labels"])
+            
+            # Calculate training accuracy
+            train_pred = model.predict(split_data["train_features"])
+            train_acc = accuracy_score(split_data["train_labels"], train_pred)
+            training_accuracy.append(train_acc)
+            
+            # Calculate validation accuracy
+            val_pred = model.predict(split_data["val_features"])
+            val_acc = accuracy_score(split_data["val_labels"], val_pred)
+            validation_accuracy.append(val_acc)
+
+        # Final test accuracy after all epochs
         y_pred = model.predict(split_data["test_features"])
         test_accuracy = accuracy_score(split_data["test_labels"], y_pred)
 
         return {
             "test_accuracy": test_accuracy,
             "target_map": self.target_map,
-            "feature_columns": self.feature_columns
+            "feature_columns": self.feature_columns,
+            "training_history": {
+                "accuracy": training_accuracy,
+                "val_accuracy": validation_accuracy
+            }
         }
