@@ -131,6 +131,6 @@
 
         /* Flash messages styling */
         .flash { padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; }
-        .flash-success { background: rgba(0, 255, 136, 0.1); border: 1px solid #012008; color: #023005; }
+        .flash-success { background: rgba(0, 255, 136, 0.1); border: 1px solid #6c9676; color: #023005; }
         .flash-danger { background: rgba(255, 77, 77, 0.1); border: 1px solid #ff4d4d; color: #ff0000; }
         .flash-warning { background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; color: #ffcc00; }
