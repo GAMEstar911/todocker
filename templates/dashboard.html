@@ -23,8 +23,17 @@
 
         <div class="main-app-content">
             <header>
-                <h1>Welcome, {{ current_user.name }}!</h1>
-                <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+                <h1>Welcome, {{ current_user.username }}!</h1>
+                <div class="header-controls">
+                    <div class="theme-switcher">
+                        <label for="theme-toggle">Dark Mode</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+                </div>
             </header>
 
             <div class="container">

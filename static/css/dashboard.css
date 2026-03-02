@@ -1,9 +1,62 @@
+:root {
+    --body-bg: #f4f7f9;
+    --text-color: #333;
+    --header-border: #dee2e6;
+    --container-bg: #ffffff;
+    --container-shadow: rgba(0,0,0,0.05);
+    --preview-bg: #f9f9f9;
+    --preview-border: #ddd;
+    --table-border: #ddd;
+    --table-header-bg: #e9ecef;
+    --table-even-row-bg: #f8f9fa;
+    --button-bg: #007bff;
+    --button-text: #ffffff;
+    --button-hover-bg: #0056b3;
+    --results-bg: #f8f9fa;
+    --results-border: #e9ecef;
+    --spinner-secondary: #f3f3f3;
+    --spinner-primary: #3498db;
+    
+    /* Sidebar specific */
+    --sidebar-bg-gradient: linear-gradient(45deg, #0f172a, #1e1b4b, #581c87, #1e1b4b);
+    --sidebar-border: #444;
+    --sidebar-header-text: #ffffff;
+    --sidebar-link-text: #adb5bd;
+    --sidebar-link-hover-bg: #343a40;
+    --sidebar-link-hover-text: #ffffff;
+    --sidebar-link-active-bg: #007bff;
+    --sidebar-link-active-text: #ffffff;
+}
+
+body.dark-mode {
+    --body-bg: #121212;
+    --text-color: #f1f1f1;
+    --header-border: #444;
+    --container-bg: #1e1e1e;
+    --container-shadow: rgba(0,0,0,0.2);
+    --preview-bg: #252525;
+    --preview-border: #444;
+    --table-border: #444;
+    --table-header-bg: #3a3a3a;
+    --table-even-row-bg: #2c2c2c;
+    --button-bg: #0056b3;
+    --button-hover-bg: #004494;
+    --results-bg: #252525;
+    --results-border: #444;
+    --spinner-secondary: #444;
+    --spinner-primary: #3498db;
+
+    /* Sidebar is already dark, minimal overrides needed */
+    --sidebar-link-active-bg: #0056b3; /* Match button color */
+}
+
 /* General Body Styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f4f7f9;
+    background-color: var(--body-bg);
     margin: 0;
-    color: #333;
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .dashboard-layout {
@@ -13,8 +66,8 @@ body {
 /* Sidebar Styles */
 .sidebar {
     width: 240px;
-    background: linear-gradient(45deg, #0f172a, #1e1b4b, #581c87, #1e1b4b); /* Matched from form background */
-    border-right: 1px solid #444;
+    background: var(--sidebar-bg-gradient);
+    border-right: 1px solid var(--sidebar-border);
     height: 100vh;
     position: fixed;
     top: 0;
@@ -25,7 +78,7 @@ body {
 .sidebar-header h3 {
     margin: 0 0 2rem 0;
     font-size: 1.5rem;
-    color: #ffffff; /* Changed for dark background */
+    color: var(--sidebar-header-text);
 }
 
 .sidebar ul {
@@ -38,7 +91,7 @@ body {
     display: block;
     padding: 0.75rem 1rem;
     text-decoration: none;
-    color: #adb5bd; /* Lightened for dark background */
+    color: var(--sidebar-link-text);
     border-radius: 6px;
     margin-bottom: 0.5rem;
     font-weight: 500;
@@ -46,13 +99,13 @@ body {
 }
 
 .sidebar ul li a:hover {
-    background-color: #343a40;
-    color: #ffffff;
+    background-color: var(--sidebar-link-hover-bg);
+    color: var(--sidebar-link-hover-text);
 }
 
 .sidebar ul li a.active {
-    background-color: #007bff; /* Using primary blue for active state */
-    color: #ffffff;
+    background-color: var(--sidebar-link-active-bg);
+    color: var(--sidebar-link-active-text);
 }
 
 /* Main Content Styles */
@@ -69,7 +122,7 @@ header {
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--header-border);
 }
 
 header h1 {
@@ -77,9 +130,15 @@ header h1 {
     font-size: 1.8rem;
 }
 
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
 .logout-button {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--button-bg);
+    color: var(--button-text);
     padding: 0.6rem 1.2rem;
     text-decoration: none;
     border-radius: 6px;
@@ -88,11 +147,68 @@ header h1 {
 }
 
 .logout-button:hover {
-    background-color: #0056b3;
+    background-color: var(--button-hover-bg);
 }
+
+/* Theme Switcher Styles */
+.theme-switcher {
+    display: flex;
+    align-items: center;
+}
+
+.theme-switcher label {
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--button-bg);
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
 .submit-button {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--button-bg);
+    color: var(--button-text);
     padding: 0.6rem 1.2rem;
     text-decoration: none;
     border-radius: 6px;
@@ -101,19 +217,17 @@ header h1 {
 }
 
 .submit-button:hover {
-    background-color: #0056b3;
+    background-color: var(--button-hover-bg);
 }
-
-
 
 /* Container for analysis and data preview */
 .container {
     display: flex;
     gap: 2rem;
-    background-color: #ffffff;
+    background-color: var(--container-bg);
     padding: 2rem;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px var(--container-shadow);
 }
 
 .main-content {
@@ -122,10 +236,10 @@ header h1 {
 
 .data-preview {
     flex: 1;
-    background: #f9f9f9;
+    background: var(--preview-bg);
     padding: 1rem 2rem;
     border-radius: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--preview-border);
 }
 
 /* Form and Results */
@@ -134,8 +248,8 @@ form {
 }
 
 form button[type="submit"] {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--button-bg);
+    color: var(--button-text);
     padding: 0.6rem 1.2rem;
     border: none;
     border-radius: 6px;
@@ -145,15 +259,15 @@ form button[type="submit"] {
 }
 
 form button[type="submit"]:hover {
-    background-color: #0056b3;
+    background-color: var(--button-hover-bg);
 }
 
 #results {
     display: none;
-    background-color: #f8f9fa;
+    background-color: var(--results-bg);
     padding: 1.5rem;
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--results-border);
 }
 
 /* Loader */
@@ -164,8 +278,8 @@ form button[type="submit"]:hover {
 }
 
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
+    border: 4px solid var(--spinner-secondary);
+    border-top: 4px solid var(--spinner-primary);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -191,19 +305,19 @@ table {
 }
 
 th, td {
-    border: 1px solid #ddd;
+    border: 1px solid var(--table-border);
     padding: 8px 12px;
     text-align: left;
     font-size: 0.9rem;
 }
 
 th {
-    background-color: #e9ecef;
+    background-color: var(--table-header-bg);
     font-weight: 600;
 }
 
 tr:nth-child(even) {
-    background-color: #f8f9fa;
+    background-color: var(--table-even-row-bg);
 }
 
 /* Confusion Matrix Chart */

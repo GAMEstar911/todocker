@@ -5,7 +5,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const accuracySpan = document.getElementById('accuracy');
     const dataTableContainer = document.getElementById('data-table-container');
     const cmContainer = document.getElementById('confusion-matrix-chart');
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
     let chart; // To hold the chart instance
+
+    // --- Theme Toggler ---
+    const applyTheme = () => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.checked = true;
+        } else {
+            body.classList.remove('dark-mode');
+            themeToggle.checked = false;
+        }
+        updateChartTheme(); // Update chart colors
+    };
+
+    const handleToggleChange = () => {
+        if (themeToggle.checked) {
+            body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+        }
+        updateChartTheme(); // Update chart colors
+    };
+
+    applyTheme();
+    themeToggle.addEventListener('change', handleToggleChange);
+    // --- End Theme Toggler ---
 
     if (analysisForm) {
         analysisForm.addEventListener('submit', async function(event) {
@@ -90,7 +120,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getChartColors() {
+        const isDarkMode = body.classList.contains('dark-mode');
+        return {
+            backgroundColor: isDarkMode ? 'rgba(54, 162, 235, 0.2)' : 'rgba(75, 192, 192, 0.2)',
+            borderColor: isDarkMode ? 'rgba(54, 162, 235, 1)' : 'rgba(75, 192, 192, 1)',
+            textColor: isDarkMode ? '#f1f1f1' : '#333'
+        };
+    }
+
+    function updateChartTheme() {
+        if (chart) {
+            const colors = getChartColors();
+            chart.options.scales.x.ticks.color = colors.textColor;
+            chart.options.scales.y.ticks.color = colors.textColor;
+            chart.options.scales.x.title.color = colors.textColor;
+            chart.options.scales.y.title.color = colors.textColor;
+            chart.data.datasets.forEach(dataset => {
+                dataset.backgroundColor = colors.backgroundColor;
+                dataset.borderColor = colors.borderColor;
+            });
+            chart.update();
+        }
+    }
+
     function renderConfusionMatrix(matrix, labels) {
+        const colors = getChartColors();
         const data = {
             labels: labels,
             datasets: []
@@ -101,8 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataset = {
                 label: labels[i],
                 data: row,
-                backgroundColor: `rgba(75, 192, 192, ${0.2 + (i / labels.length) * 0.6})`,
-                borderColor: 'white',
+                backgroundColor: colors.backgroundColor,
+                borderColor: colors.borderColor,
                 borderWidth: 1
             };
             data.datasets.push(dataset);
@@ -118,18 +173,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     x: {
                         stacked: true,
                         ticks: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            color: colors.textColor
                         },
                         title: {
                             display: true,
-                            text: 'Predicted'
+                            text: 'Predicted',
+                            color: colors.textColor
                         }
                     },
                     y: {
                         stacked: true,
                         title: {
                             display: true,
-                            text: 'Actual'
+                            text: 'Actual',
+                            color: colors.textColor
+                        },
+                        ticks: {
+                            color: colors.textColor
                         }
                     }
                 },
