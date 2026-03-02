@@ -1,11 +1,9 @@
 import os
 import json
 import smtplib
-import pymysql
 from email.message import EmailMessage
 from urllib import error as urllib_error
 from urllib import request as urllib_request
-pymysql.install_as_MySQLdb()
 
 import pandas as pd
 from logistics_runner import LogisticsRunner
@@ -317,14 +315,7 @@ def is_email_service_configured():
     return False
 
 
-def open_db_connection():
-    try:
-        conn = db.engine.raw_connection()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        return conn, cursor
-    except Exception:
-        app.logger.exception("Failed to open database connection")
-        return None, None
+
 
 # ----------------- USER MODEL -----------------
 class User(db.Model):
@@ -383,11 +374,6 @@ def form2():
             flash("Invalid request.", "danger")
             return redirect(url_for("form2"))
 
-        conn, cursor = open_db_connection()
-        if not conn:
-            flash("Database is temporarily unavailable. Please try again shortly.", "danger")
-            return redirect(url_for("form2"))
-
         # ----------------- REGISTER -----------------
         if action == "register":
             name = request.form.get("name", "").strip()
@@ -397,32 +383,22 @@ def form2():
 
             if not name or not email or not password or not confirm_password:
                 flash("Name, email, password, and confirm password are required.", "danger")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
             if password != confirm_password:
                 flash("Passwords do not match.", "danger")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
-            cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-            existing_user = cursor.fetchone()
+            existing_user = User.query.filter_by(email=email).first()
 
             if existing_user:
                 flash("Account already exists. Please login or reset password.", "warning")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
             hashed = bcrypt.generate_password_hash(password).decode("utf-8")
-
-            cursor.execute(
-                "INSERT INTO users (full_name, email, password_hash) VALUES (%s,%s,%s)",
-                (name, email, hashed)
-            )
-            conn.commit()
+            new_user = User(full_name=name, email=email, password_hash=hashed)
+            db.session.add(new_user)
+            db.session.commit()
 
             flash("Account created successfully! Please login.", "success")
 
@@ -433,19 +409,13 @@ def form2():
 
             if not email or not password:
                 flash("Email and password are required.", "danger")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
-            cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-            user = cursor.fetchone()
+            user = User.query.filter_by(email=email).first()
 
-            if user and bcrypt.check_password_hash(user["password_hash"], password):
-                user_obj = User.query.filter_by(email=email).first()
-                login_user(user_obj)
-                cursor.close()
-                conn.close()
-                flash(f"Welcome, {user_obj.full_name}!", "success")
+            if user and bcrypt.check_password_hash(user.password_hash, password):
+                login_user(user)
+                flash(f"Welcome, {user.full_name}!", "success")
                 return redirect(url_for("dashboard"))
 
             flash("Invalid credentials", "danger")
@@ -456,17 +426,12 @@ def form2():
 
             if not email:
                 flash("Email is required.", "danger")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
-            cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-            user = cursor.fetchone()
+            user = User.query.filter_by(email=email).first()
 
             if not user:
                 flash("No account found with this email.", "danger")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
             token = serializer.dumps(email, salt="reset-password")
@@ -474,15 +439,10 @@ def form2():
 
             if not is_email_service_configured():
                 flash("Email service is not configured. Contact support.", "danger")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
-            cursor.execute(
-                "UPDATE users SET reset_token=%s WHERE email=%s",
-                (token, email)
-            )
-            conn.commit()
+            user.reset_token = token
+            db.session.commit()
 
             try:
                 send_reset_email(email, reset_link)
@@ -493,24 +453,16 @@ def form2():
                     app.config["EMAIL_BACKEND"],
                 )
                 try:
-                    cursor.execute(
-                        "UPDATE users SET reset_token=NULL WHERE email=%s AND reset_token=%s",
-                        (email, token)
-                    )
-                    conn.commit()
+                    user.reset_token = None
+                    db.session.commit()
                 except Exception:
                     app.logger.exception("Failed to clear reset token for %s after mail error", email)
-                
-                # Provide a more specific error message to the user
+
                 flash(f"Could not send reset email. The mail server reported an error: {e}", "danger")
-                cursor.close()
-                conn.close()
                 return redirect(url_for("form2"))
 
             flash("Password reset link sent to your email!", "info")
 
-        cursor.close()
-        conn.close()
         return redirect(url_for("form2"))
 
     section = request.args.get("next", "register")
@@ -555,21 +507,10 @@ def reset(token):
         flash("Invalid or expired token", "danger")
         return redirect(url_for("form2"))
 
-    conn, cursor = open_db_connection()
-    if not conn:
-        flash("Database is temporarily unavailable. Please try again shortly.", "danger")
-        return redirect(url_for("form2"))
-
-    cursor.execute(
-        "SELECT * FROM users WHERE email=%s AND reset_token=%s",
-        (email, token)
-    )
-    user = cursor.fetchone()
+    user = User.query.filter_by(email=email, reset_token=token).first()
 
     if not user:
         flash("Invalid or already-used token", "danger")
-        cursor.close()
-        conn.close()
         return redirect(url_for("form2"))
 
     if request.method == "POST":
@@ -578,31 +519,21 @@ def reset(token):
 
         if not password or not confirm_password:
             flash("Both password fields are required.", "danger")
-            cursor.close()
-            conn.close()
             return redirect(request.url)
 
         if password != confirm_password:
             flash("Passwords do not match.", "danger")
-            cursor.close()
-            conn.close()
             return redirect(request.url)
 
         hashed = bcrypt.generate_password_hash(password).decode("utf-8")
 
-        cursor.execute(
-            "UPDATE users SET password_hash=%s, reset_token=NULL WHERE email=%s",
-            (hashed, email)
-        )
-        conn.commit()
+        user.password_hash = hashed
+        user.reset_token = None
+        db.session.commit()
 
         flash("Password updated successfully!", "success")
-        cursor.close()
-        conn.close()
         return redirect(url_for("form2"))
 
-    cursor.close()
-    conn.close()
     return render_template("reset.html")
 
 
