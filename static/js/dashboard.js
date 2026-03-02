@@ -28,9 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: formData
                 });
 
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} ${response.statusText}. ${errorText}`);
+                }
+
                 const results = await response.json();
 
-                if (response.ok) {
+                if (results.error) {
+                    alert('Error: ' + results.error);
+                } else {
                     accuracySpan.textContent = (results.test_accuracy * 100).toFixed(2) + '%';
                     
                     // Render the new chart
@@ -99,12 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     resultsDiv.style.display = 'block';
-                } else {
-                    alert('Error: ' + results.error);
                 }
             } catch (error) {
                 console.error('An error occurred:', error);
-                alert('An unexpected error occurred. Please check the console.');
+                alert('An unexpected error occurred: ' + error.message);
             } finally {
                 loader.style.display = 'none';
             }
