@@ -15,7 +15,7 @@
 }
 
 .key-list th {
-    background-color: #f9fafb;
+    background-color: blue;
     font-weight: 600;
 }
 
@@ -39,6 +39,51 @@
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+    background-color: #2563eb;
+}
+
+.delete-btn {
+    background-color: #ef4444; /* Red */
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+    background-color: #dc2626;
+}
+
+/* Dark Mode Styles */
+.dark-mode .api-key-item {
+    background-color: #374151; /* Darker gray */
+    border-color: #4b5563;
+}
+
+.dark-mode .api-key-item span {
+    color: #f3f4f6; /* Light gray text */
+}
+
+.dark-mode .api-key-table th {
+    background-color: #1f2937; /* Even darker header */
+    color: #d1d5db; /* Lighter text for header */
+    border-color: #4b5563;
+}
+
+.dark-mode .api-key-table td {
+    border-color: #4b5563;
+}
+
+.dark-mode .api-key-value {
+    background-color: #4b5563; /* Dark background for the key itself */
+    color: #e5e7eb;
+    border: 1px solid #6b7280;
     font-size: 0.875rem;
     margin-left: 1rem;
 }

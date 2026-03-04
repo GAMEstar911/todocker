@@ -10,7 +10,7 @@ from logistics_runner import LogisticsRunner
 from flask import (
     Flask, render_template,
     request, redirect,
-    url_for, flash, jsonify
+    url_for, flash, jsonify, g
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -503,6 +503,59 @@ def delete_api_key(key_id):
     db.session.commit()
     flash("API Key deleted successfully.", "success")
     return redirect(url_for("api_keys"))
+
+
+# ----------------- API ROUTES -----------------
+from functools import wraps
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authorization header is missing or invalid'}), 401
+        
+        api_key_str = auth_header.split(' ')[1]
+        api_key = APIKey.query.filter_by(key=api_key_str).first()
+        
+        if not api_key:
+            return jsonify({'error': 'Invalid API key'}), 401
+        
+        # Update the last used timestamp
+        api_key.last_used_at = datetime.utcnow()
+        db.session.commit()
+        
+        # Pass the user associated with the key to the route
+        g.api_user = api_key.user
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/api/analyze", methods=["POST"])
+@require_api_key
+def api_analyze():
+    if 'dataset' not in request.files:
+        return jsonify({'error': 'No dataset file provided'}), 400
+    
+    file = request.files['dataset']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if file and file.filename.endswith('.csv'):
+        try:
+            runner = LogisticsRunner(file)
+            accuracy, report, conf_matrix = runner.run()
+            
+            return jsonify({
+                'message': 'Analysis successful',
+                'model_accuracy': accuracy,
+                'classification_report': report,
+                'confusion_matrix': conf_matrix.tolist() # Convert numpy array to list for JSON
+            }), 200
+        except Exception as e:
+            app.logger.error(f"API Analysis Error: {e}")
+            return jsonify({'error': 'An error occurred during analysis', 'details': str(e)}), 500
+
+    return jsonify({'error': 'Invalid file type. Please upload a .csv file'}), 400
 
 
 # ----------------- LOGOUT -----------------
