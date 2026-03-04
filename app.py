@@ -564,6 +564,30 @@ def api_analyze():
     return jsonify({'error': 'Invalid file type. Please upload a .csv file'}), 400
 
 
+# ----------------- CHATBOT ROUTES -----------------
+
+@app.route("/chatbot")
+@login_required
+def chatbot():
+    return render_template("chatbot.html")
+
+@app.route("/ask", methods=["POST"])
+@login_required
+def ask():
+    data = request.get_json()
+    user_message = data.get("message")
+
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
+
+    # --- Mock Response (Phase 1) ---
+    # In Phase 2, we will replace this with a call to an LLM.
+    bot_response = f"You said: '{user_message}'"
+    # --------------------------------
+
+    return jsonify({"response": bot_response})
+
+
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
 @login_required

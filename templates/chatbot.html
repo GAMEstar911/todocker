@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Chatbot - My App{% endblock %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <header class="content-header">
+        <h1>Chatbot</h1>
+        <p>Ask questions and get help with your data analysis.</p>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-window" id="chat-window">
+            <!-- Chat messages will be appended here by JavaScript -->
+            <div class="message bot-message">
+                <p>Hello! I'm your AI assistant. How can I help you today?</p>
+            </div>
+        </div>
+        <form class="chat-input-form" id="chat-form">
+            <input type="text" id="chat-input" placeholder="Type your message here..." autocomplete="off">
+            <button type="submit">Send</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,114 @@
+/* Chat Container Styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 70vh; /* 70% of the viewport height */
+    max-width: 800px;
+    margin: 2rem auto;
+    border: 1px solid #e5e7eb; /* Light gray border */
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Chat Window (where messages appear) */
+.chat-window {
+    flex-grow: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Individual Message Styles */
+.message {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    line-height: 1.5;
+}
+
+.user-message {
+    background-color: #3b82f6; /* Blue */
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+}
+
+.bot-message {
+    background-color: #f3f4f6; /* Light gray */
+    color: #1f2937; /* Dark gray text */
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+}
+
+.message p {
+    margin: 0;
+}
+
+/* Chat Input Form */
+.chat-input-form {
+    display: flex;
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+#chat-input {
+    flex-grow: 1;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+#chat-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px #bfdbfe;
+}
+
+.chat-input-form button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    margin-left: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.chat-input-form button:hover {
+    background-color: #2563eb;
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .chat-container {
+    background-color: #1f2937; /* Dark blue-gray */
+    border-color: #4b5563;
+}
+
+.dark-mode .bot-message {
+    background-color: #374151; /* Lighter dark gray */
+    color: #f3f4f6;
+}
+
+.dark-mode .chat-input-form {
+    background-color: #111827; /* Very dark blue */
+    border-top-color: #4b5563;
+}
+
+.dark-mode #chat-input {
+    background-color: #374151;
+    border-color: #6b7280;
+    color: #f3f4f6;
+}
+
+.dark-mode #chat-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
