@@ -542,7 +542,9 @@ def api_analyze():
 
     if file and file.filename.endswith('.csv'):
         try:
-            runner = LogisticsRunner(file)
+            # The LogisticsRunner is now expected to handle the file object directly.
+            # This change standardizes the initialization with the /analyze route.
+            runner = LogisticsRunner(file_obj=file)
             accuracy, report, conf_matrix = runner.run()
             
             return jsonify({
@@ -624,7 +626,9 @@ def analyze():
             data_preview = df.head(100).to_dict(orient='records')
 
             # Initialize and run the logistics pipeline
-            runner = LogisticsRunner(data=df)
+            # The runner is now expected to handle the file object directly.
+            file.seek(0) # Reset file pointer after pd.read_csv
+            runner = LogisticsRunner(file_obj=file, data=df)
             results = runner.run_experiment()
             results['data_preview'] = data_preview
 
