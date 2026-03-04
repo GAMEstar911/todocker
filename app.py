@@ -542,20 +542,24 @@ def api_analyze():
 
     if file and file.filename.endswith('.csv'):
         try:
-            # The LogisticsRunner is now expected to handle the file object directly.
-            # This change standardizes the initialization with the /analyze route.
-            runner = LogisticsRunner(file_obj=file)
-            accuracy, report, conf_matrix = runner.run()
-            
-            return jsonify({
-                'message': 'Analysis successful',
-                'model_accuracy': accuracy,
-                'classification_report': report,
-                'confusion_matrix': conf_matrix.tolist() # Convert numpy array to list for JSON
-            }), 200
-        except Exception as e:
-            app.logger.error(f"API Analysis Error: {e}")
-            return jsonify({'error': 'An error occurred during analysis', 'details': str(e)}), 500
+                df = pd.read_csv(file)
+
+                # Pass the DataFrame to the runner
+                runner = LogisticsRunner(data=df)
+                results = runner.run_experiment()
+
+                # Clean up results for JSON serialization
+                if 'training_history' in results:
+                    for key, value in results['training_history'].items():
+                        results['training_history'][key] = [float(v) for v in value]
+                
+                return jsonify({
+                    'message': 'Analysis successful',
+                    **results
+                }), 200
+            except Exception as e:
+                app.logger.error(f"API Analysis Error: {e}")
+                return jsonify({'error': 'An error occurred during analysis', 'details': str(e)}), 500
 
     return jsonify({'error': 'Invalid file type. Please upload a .csv file'}), 400
 
@@ -619,29 +623,27 @@ def analyze():
 
     if file and file.filename.endswith('.csv'):
         try:
-            df = pd.read_csv(file)
-            
-            # Prepare a preview of the dataframe for the frontend
-            # Convert to a dictionary for JSON serialization
-            data_preview = df.head(100).to_dict(orient='records')
+                df = pd.read_csv(file)
+                
+                # Prepare a preview of the dataframe for the frontend
+                # Convert to a dictionary for JSON serialization
+                data_preview = df.head(100).to_dict(orient='records')
 
-            # Initialize and run the logistics pipeline
-            # The runner is now expected to handle the file object directly.
-            file.seek(0) # Reset file pointer after pd.read_csv
-            runner = LogisticsRunner(file_obj=file, data=df)
-            results = runner.run_experiment()
-            results['data_preview'] = data_preview
+                # Initialize and run the logistics pipeline
+                runner = LogisticsRunner(data=df)
+                results = runner.run_experiment()
+                results['data_preview'] = data_preview
 
-            # Clean up results for JSON serialization
-            if 'training_history' in results:
-                for key, value in results['training_history'].items():
-                    results['training_history'][key] = [float(v) for v in value]
+                # Clean up results for JSON serialization
+                if 'training_history' in results:
+                    for key, value in results['training_history'].items():
+                        results['training_history'][key] = [float(v) for v in value]
 
-            return jsonify(results)
+                return jsonify(results)
 
-        except Exception as e:
-            app.logger.error(f"Analysis failed: {e}")
-            return jsonify({"error": str(e)}), 500
+            except Exception as e:
+                app.logger.error(f"Analysis failed: {e}")
+                return jsonify({"error": str(e)}), 500
 
     return jsonify({"error": "Invalid file type. Please upload a CSV."}), 400
 
