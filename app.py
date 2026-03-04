@@ -557,7 +557,7 @@ def api_analyze():
                     'message': 'Analysis successful',
                     **results
                 }), 200
-            except Exception as e:
+        except Exception as e:
                 app.logger.error(f"API Analysis Error: {e}")
                 return jsonify({'error': 'An error occurred during analysis', 'details': str(e)}), 500
 
@@ -641,7 +641,7 @@ def analyze():
 
                 return jsonify(results)
 
-            except Exception as e:
+        except Exception as e:
                 app.logger.error(f"Analysis failed: {e}")
                 return jsonify({"error": str(e)}), 500
 
