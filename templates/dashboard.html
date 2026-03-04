@@ -1,76 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
-</head>
-<body>
-    <div class="dashboard-layout">
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <h3>My App</h3>
+{% extends "base.html" %}
+
+{% block title %}Analysis Dashboard{% endblock %}
+
+{% block page_title %}Welcome, {{ current_user.full_name }}!{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h2>Analyze Your Dataset</h2>
+    <p>Upload a CSV file to train a logistic regression model. The last column will be treated as the target variable for prediction.</p>
+
+    <form id="analysis-form" enctype="multipart/form-data">
+        <input type="file" id="dataset" name="dataset" accept=".csv" required>
+        <button type="submit">Analyze</button>
+    </form>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p>Training model... This may take a moment.</p>
+    </div>
+
+    <div id="results">
+            <h2>Analysis Results</h2>
+            <p><strong>Model Test Accuracy:</strong> <span id="accuracy"></span></p>
+            <div id="confusion-matrix-container">
+                <canvas id="confusion-matrix-chart"></canvas>
             </div>
-            <ul>
-                <li><a href="{{ url_for('dashboard') }}" class="active">Dashboard</a></li>
-                <li><a href="{{ url_for('api_keys') }}">API Keys</a></li>
-                <li><a href="#">Analysis History</a></li>
-                <li><a href="#">Profile Settings</a></li>
-            </ul>
-        </nav>
-
-        <div class="main-app-content">
-            <header>
-                <h1>Welcome, {{ current_user.full_name }}!</h1>
-                <div class="header-controls">
-                    <div class="theme-switcher">
-                        <label for="theme-toggle">Dark Mode</label>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="theme-toggle">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-                </div>
-            </header>
-
-            <div class="container">
-                <div class="main-content">
-                    <h2>Analyze Your Dataset</h2>
-                    <p>Upload a CSV file to train a logistic regression model. The last column will be treated as the target variable for prediction.</p>
-
-                    <form id="analysis-form" enctype="multipart/form-data">
-                        <input type="file" id="dataset" name="dataset" accept=".csv" required>
-                        <button type="submit">Analyze</button>
-                    </form>
-
-                    <div id="loader">
-                        <div class="spinner"></div>
-                        <p>Training model... This may take a moment.</p>
-                    </div>
-
-                    <div id="results">
-                            <h2>Analysis Results</h2>
-                            <p><strong>Model Test Accuracy:</strong> <span id="accuracy"></span></p>
-                            <div id="confusion-matrix-container">
-                                <canvas id="confusion-matrix-chart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="data-preview">
-                        <h2>Data Preview</h2>
-                        <div id="data-table-container">
-                            <p>Your data will appear here after analysis.</p>
-                        </div>
-                    </div>
-                </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-</body>
-</html>
+    <div class="data-preview">
+        <h2>Data Preview</h2>
+        <div id="data-table-container">
+            <p>Your data will appear here after analysis.</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

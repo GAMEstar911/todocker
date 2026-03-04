@@ -1,3 +1,19 @@
 {
-    "python-envs.pythonProjects": []
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "shinkansen.proxy.rlwy.net",
+            "port": 29153,
+            "driver": "MariaDB",
+            "name": "Railway DB",
+            "database": "railway",
+            "username": "root",
+            "askForPassword": true
+        }
+    ]
 }

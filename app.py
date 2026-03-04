@@ -491,6 +491,20 @@ def api_keys():
     return render_template("api_keys.html", current_user=current_user, keys=keys)
 
 
+@app.route("/api-keys/<int:key_id>/delete", methods=["POST"])
+@login_required
+def delete_api_key(key_id):
+    key_to_delete = APIKey.query.get_or_404(key_id)
+    if key_to_delete.user_id != current_user.id:
+        flash("You do not have permission to delete this key.", "danger")
+        return redirect(url_for("api_keys"))
+    
+    db.session.delete(key_to_delete)
+    db.session.commit()
+    flash("API Key deleted successfully.", "success")
+    return redirect(url_for("api_keys"))
+
+
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
 @login_required

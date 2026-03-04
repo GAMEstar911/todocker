@@ -1,0 +1,77 @@
+.key-generation {
+    margin-bottom: 2rem;
+}
+
+.key-list table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.key-list th, .key-list td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+}
+
+.key-list th {
+    background-color: #f9fafb;
+    font-weight: 600;
+}
+
+.key-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.api-key-value {
+    font-family: monospace;
+    background-color: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.copy-btn {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    margin-left: 1rem;
+}
+
+.copy-btn:hover {
+    background-color: #2563eb;
+}
+
+.button-danger {
+    background-color: #ef4444;
+    color: white;
+}
+
+.button-danger:hover {
+    background-color: #dc2626;
+}
+
+.flash-messages {
+    margin-bottom: 1rem;
+}
+
+.flash {
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.flash.success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.flash.danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
