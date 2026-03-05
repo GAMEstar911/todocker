@@ -591,7 +591,7 @@ def ask():
         genai.configure(api_key=gemini_api_key)
         
         # Create the model
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.0-pro')
         
         # Send the message and get the response
         response = model.generate_content(user_message)
