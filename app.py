@@ -608,6 +608,29 @@ def ask():
     return jsonify({"response": bot_response})
 
 
+# --- Temporary route to list available models ---
+@app.route("/list-models")
+@login_required
+def list_models():
+    try:
+        gemini_api_key = env_first("GEMINI_API_KEY")
+        if not gemini_api_key:
+            return "GEMINI_API_KEY is not configured on the server.", 500
+
+        genai.configure(api_key=gemini_api_key)
+
+        models_list = "<h1>Available Gemini Models:</h1><ul>"
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                models_list += f"<li>{m.name}</li>"
+        models_list += "</ul>"
+        return models_list
+
+    except Exception as e:
+        app.logger.error(f"Failed to list models: {e}")
+        return f"An error occurred: {e}", 500
+
+
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
 @login_required
