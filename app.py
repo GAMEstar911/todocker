@@ -591,7 +591,7 @@ def ask():
         genai.configure(api_key=gemini_api_key)
                 
                 # Create the model
-        model_name = 'gemini-1.0-pro'
+        model_name = 'gemini-pro'
         app.logger.info(f"Attempting to use Gemini model: {model_name}")
         model = genai.GenerativeModel(model_name)
         
