@@ -589,9 +589,11 @@ def ask():
             return jsonify({"error": "GEMINI_API_KEY is not configured on the server."}), 500
         
         genai.configure(api_key=gemini_api_key)
-        
-        # Create the model
-        model = genai.GenerativeModel('gemini-1.0-pro')
+                
+                # Create the model
+        model_name = 'gemini-1.0-pro'
+        app.logger.info(f"Attempting to use Gemini model: {model_name}")
+        model = genai.GenerativeModel(model_name)
         
         # Send the message and get the response
         response = model.generate_content(user_message)
