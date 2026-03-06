@@ -5,6 +5,39 @@
 {% block content %}
 <div class="container-fluid">
     <h1 class="h3 mb-4 text-gray-800 dark-mode-text">Analysis History</h1>
-    <p class="dark-mode-text">This page will show a history of your past dataset analyses. (Coming Soon)</p>
+
+    {% if history %}
+        <div class="card shadow mb-4 dark-mode-card">
+            <div class="card-header py-3 dark-mode-card-header">
+                <h6 class="m-0 font-weight-bold text-primary">Your Past Analyses</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered dark-mode-text" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Date</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history %}
+                                <tr>
+                                    <td>{{ item.filename }}</td>
+                                    <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</td>
+                                    <td>
+                                        <pre class="dark-mode-pre"><code>{{ item.result | tojson(indent=2) }}</code></pre>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p class="dark-mode-text">You have not performed any analyses yet. Use the API to analyze a dataset, and the results will appear here.</p>
+    {% endif %}
 </div>
 {% endblock %}

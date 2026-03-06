@@ -362,6 +362,15 @@ class APIKey(db.Model):
         self.key = secrets.token_hex(32)
 
 
+class AnalysisHistory(db.Model):
+    __tablename__ = 'analysis_history'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    result = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -554,6 +563,15 @@ def api_analyze():
                     for key, value in results['training_history'].items():
                         results['training_history'][key] = [float(v) for v in value]
                 
+                # Save the analysis to history
+                history_entry = AnalysisHistory(
+                    user_id=g.api_user.id,
+                    filename=file.filename,
+                    result=results
+                )
+                db.session.add(history_entry)
+                db.session.commit()
+                
                 return jsonify({
                     'message': 'Analysis successful',
                     **results
@@ -616,7 +634,8 @@ def ask():
 @app.route("/analysis-history")
 @login_required
 def analysis_history():
-    return render_template("analysis_history.html")
+    history = AnalysisHistory.query.filter_by(user_id=current_user.id).order_by(AnalysisHistory.created_at.desc()).all()
+    return render_template("analysis_history.html", history=history)
 
 
 @app.route("/account-settings")
