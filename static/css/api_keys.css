@@ -48,7 +48,7 @@
 }
 
 .delete-btn {
-    background-color: #ef4444; /* Red */
+    background-color: #f10a0a; /* Red */
     color: white;
     border: none;
     padding: 0.5rem 0.75rem;
@@ -58,7 +58,7 @@
 }
 
 .delete-btn:hover {
-    background-color: #dc2626;
+    background-color: #eb0d0d;
 }
 
 /* Dark Mode Styles */
