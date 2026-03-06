@@ -9,3 +9,6 @@ pymysql==1.1.0
 Flask-SQLAlchemy>=3.1.1
 SQLAlchemy>=2.0.32
 google-generativeai
+pandas
+numpy
+scikit-learn
