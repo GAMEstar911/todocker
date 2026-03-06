@@ -491,6 +491,10 @@ def dashboard():
 @login_required
 def api_keys():
     if request.method == "POST":
+        # Delete all existing keys for the current user
+        APIKey.query.filter_by(user_id=current_user.id).delete()
+
+        # Generate a new key
         new_key = APIKey(user_id=current_user.id)
         db.session.add(new_key)
         db.session.commit()
