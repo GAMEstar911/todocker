@@ -567,45 +567,45 @@ def api_analyze():
 
 # ----------------- CHATBOT ROUTES -----------------
 
-@app.route("/chatbot")
-@login_required
-def chatbot():
-    return render_template("chatbot.html")
+# @app.route("/chatbot")
+# @login_required
+# def chatbot():
+#     return render_template("chatbot.html")
 
-@app.route("/ask", methods=["POST"])
-@login_required
-def ask():
-    data = request.get_json()
-    user_message = data.get("message")
-
-    if not user_message:
-        return jsonify({"error": "No message provided"}), 400
-
-    # --- Real AI Response (Phase 2) ---
-    try:
-        # Configure the generative AI library with the API key
-        gemini_api_key = env_first("GEMINI_API_KEY")
-        if not gemini_api_key:
-            return jsonify({"error": "GEMINI_API_KEY is not configured on the server."}), 500
-        
-        genai.configure(api_key=gemini_api_key)
-                
-                # Create the model
-        model_name = 'gemini-pro-latest'
-        app.logger.info(f"Attempting to use Gemini model: {model_name}")
-        model = genai.GenerativeModel(model_name)
-        
-        # Send the message and get the response
-        response = model.generate_content(user_message)
-        
-        bot_response = response.text
-
-    except Exception as e:
-        app.logger.error(f"Gemini API Error: {e}")
-        bot_response = "Sorry, I'm having trouble connecting to my brain right now."
-    # --------------------------------
-
-    return jsonify({"response": bot_response})
+# @app.route("/ask", methods=["POST"])
+# @login_required
+# def ask():
+#     data = request.get_json()
+#     user_message = data.get("message")
+# 
+#     if not user_message:
+#         return jsonify({"error": "No message provided"}), 400
+# 
+#     # --- Real AI Response (Phase 2) ---
+#     try:
+#         # Configure the generative AI library with the API key
+#         gemini_api_key = env_first("GEMINI_API_KEY")
+#         if not gemini_api_key:
+#             return jsonify({"error": "GEMINI_API_KEY is not configured on the server."}), 500
+#         
+#         genai.configure(api_key=gemini_api_key)
+#         
+#         # Create the model
+#         model_name = 'gemini-pro-latest'
+#         app.logger.info(f"Attempting to use Gemini model: {model_name}")
+#         model = genai.GenerativeModel(model_name)
+#         
+#         # Send the message and get the response
+#         response = model.generate_content(user_message)
+#         
+#         bot_response = response.text
+# 
+#     except Exception as e:
+#         app.logger.error(f"Gemini API Error: {e}")
+#         bot_response = "Sorry, I'm having trouble connecting to my brain right now."
+#     # --------------------------------
+# 
+#     return jsonify({"response": bot_response})
 
 
 
