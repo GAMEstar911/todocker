@@ -6,6 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 
+# Install base requirements first (cached layer)
+COPY base-requirements.txt .
+RUN pip install --default-timeout=100 --retries 5 --no-cache-dir --verbose -r base-requirements.txt
+
 # Install the rest of the requirements
 COPY requirements.txt .
 RUN pip install --default-timeout=100 --retries 5 --no-cache-dir --verbose -r requirements.txt
