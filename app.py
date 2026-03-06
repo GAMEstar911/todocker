@@ -2,7 +2,7 @@ import os
 import json
 import smtplib
 from email.message import EmailMessage
-import google.generativeai as genai
+# import google.generativeai as genai
 from urllib import error as urllib_error
 from urllib import request as urllib_request
 
