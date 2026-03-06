@@ -644,6 +644,12 @@ def account_settings():
     return render_template("account_settings.html")
 
 
+@app.route("/api-test")
+@login_required
+def api_test_page():
+    return render_template("api_test_page.html")
+
+
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
 @login_required
