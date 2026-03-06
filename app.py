@@ -611,6 +611,24 @@ def ask():
 
 
 
+# ----------------- NEW SIDEBAR PAGES -----------------
+
+@app.route("/analysis-history")
+@login_required
+def analysis_history():
+    return render_template("analysis_history.html")
+
+@app.route("/profile-settings")
+@login_required
+def profile_settings():
+    return render_template("profile_settings.html")
+
+@app.route("/account-settings")
+@login_required
+def account_settings():
+    return render_template("account_settings.html")
+
+
 # ----------------- LOGOUT -----------------
 @app.route("/logout")
 @login_required
