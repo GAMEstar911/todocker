@@ -615,6 +615,7 @@ if xai_api_key_for_models:
     grok_model_client = OpenAI(
         api_key=xai_api_key_for_models,
         base_url="https://api.x.ai/v1",
+        timeout=180,
     )
 
 
@@ -657,7 +658,7 @@ def ask():
         if not xai_api_key:
             return jsonify({"error": "XAI_API_KEY is not configured on the server."}), 500
 
-        client = Client(api_key=xai_api_key)
+        client = Client(api_key=xai_api_key, timeout=180)
 
         model_name = "grok-1.5-flash"
         app.logger.info(f"Attempting to use Grok model: {model_name}")
