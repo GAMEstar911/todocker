@@ -140,6 +140,21 @@ app.config["REMEMBER_COOKIE_SECURE"] = env_bool("REMEMBER_COOKIE_SECURE", defaul
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+# Custom Jinja2 filter to format timestamp
+@app.template_filter('strftime')
+def _jinja2_filter_datetime(timestamp, fmt='%Y-%m-%d %H:%M:%S'):
+    if timestamp is None:
+        return 'N/A'
+    # The filter expects a datetime object from SQLAlchemy, but the original
+    # instruction specified a unix timestamp. To be safe, we handle both.
+    if not isinstance(timestamp, datetime):
+        try:
+            timestamp = datetime.fromtimestamp(int(timestamp))
+        except (ValueError, TypeError):
+            return timestamp  # Return original value if conversion fails
+    return timestamp.strftime(fmt)
+
+
 # Add security headers to prevent caching
 @app.after_request
 def add_security_headers(response):
