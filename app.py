@@ -588,7 +588,33 @@ def api_analyze():
     return jsonify({'error': 'Invalid file type. Please upload a .csv file'}), 400
 
 
+from openai import OpenAI
+
 # ----------------- CHATBOT ROUTES -----------------
+
+# Initialize a client for model listing, using the OpenAI library
+grok_model_client = None
+xai_api_key_for_models = env_first("XAI_API_KEY")
+if xai_api_key_for_models:
+    grok_model_client = OpenAI(
+        api_key=xai_api_key_for_models,
+        base_url="https://api.x.ai/v1",
+    )
+
+
+@app.route("/grok-models")
+@login_required
+def grok_models():
+    if not grok_model_client:
+        flash("Grok model listing is not configured on the server (XAI_API_KEY is missing).", "warning")
+        return render_template("grok_models.html", models=[])
+    try:
+        models = grok_model_client.models.list()
+        return render_template("grok_models.html", models=models.data)
+    except Exception as e:
+        flash(f"Could not retrieve Grok models: {e}", "danger")
+        return render_template("grok_models.html", models=[])
+
 
 @app.route("/chatbot")
 @login_required

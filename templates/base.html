@@ -18,7 +18,8 @@
                 <li><a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' else '' }}">Dashboard</a></li>
                 <li><a href="{{ url_for('api_keys') }}" class="{{ 'active' if request.endpoint == 'api_keys' else '' }}">API Keys</a></li>
           <li><a href="{{ url_for('chatbot') }}" class="{{ 'active' if request.endpoint == 'chatbot' else '' }}">Chatbot</a></li>
-                <li><a href="{{ url_for('analysis_history') }}" class="{{ 'active' if request.endpoint == 'analysis_history' else '' }}">Analysis History</a></li>
+                    <li><a href="{{ url_for('grok_models') }}" class="{{ 'active' if request.endpoint == 'grok_models' else '' }}">Grok Models</a></li>
+                    <li><a href="{{ url_for('analysis_history') }}" class="{{ 'active' if request.endpoint == 'analysis_history' else '' }}">Analysis History</a></li>
                         <li><a href="{{ url_for('account_settings') }}" class="{{ 'active' if request.endpoint == 'account_settings' else '' }}">Account Settings</a></li>
             </ul>
         </nav>

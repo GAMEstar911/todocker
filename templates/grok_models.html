@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Available Grok Models - My App{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800 dark-mode-text">Available Grok Models</h1>
+    <p class="dark-mode-text">This page lists all the models currently available through the Grok API.</p>
+
+    <div class="card shadow mb-4 dark-mode-card">
+        <div class="card-header py-3 dark-mode-card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Model List</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Model ID</th>
+                            <th>Owned By</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for model in models %}
+                        <tr>
+                            <td>{{ model.id }}</td>
+                            <td>{{ model.owned_by }}</td>
+                            <td>{{ model.created | int | strftime }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3">No models found or there was an error retrieving them.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block custom_filters %}
+<script>
+    // Custom filter to format Unix timestamp
+    function strftime(timestamp) {
+        if (!timestamp) return 'N/A';
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+</script>
+{% endblock %}
