@@ -1,6 +1,7 @@
 import os
 import json
 import smtplib
+import traceback
 from email.message import EmailMessage
 from xai_sdk import Client
 from xai_sdk.chat import user, system
@@ -627,6 +628,11 @@ def grok_models():
         models = grok_model_client.models.list()
         return render_template("grok_models.html", models=models.data)
     except Exception as e:
+        print("--- ERROR IN /grok-models ---")
+        print(f"Exception Type: {type(e)}")
+        print(f"Exception Details: {e}")
+        traceback.print_exc()
+        print("-----------------------------")
         flash(f"Could not retrieve Grok models: {e}", "danger")
         return render_template("grok_models.html", models=[])
 
@@ -661,6 +667,11 @@ def ask():
         bot_response = response.content
 
     except Exception as e:
+        print("--- ERROR IN /ask ---")
+        print(f"Exception Type: {type(e)}")
+        print(f"Exception Details: {e}")
+        traceback.print_exc()
+        print("---------------------")
         app.logger.error(f"Grok API Error: {e}")
         bot_response = "Sorry, I'm having trouble connecting to my brain right now."
 
