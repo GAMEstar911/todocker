@@ -15,5 +15,6 @@
             "username": "root",
             "askForPassword": true
         }
-    ]
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:venv"
 }

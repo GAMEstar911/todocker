@@ -2,7 +2,8 @@ import os
 import json
 import smtplib
 from email.message import EmailMessage
-import google.generativeai as genai
+from xai_sdk import Client
+from xai_sdk.chat import user, system
 from urllib import error as urllib_error
 from urllib import request as urllib_request
 
@@ -603,29 +604,24 @@ def ask():
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
-    # --- Real AI Response (Phase 2) ---
     try:
-        # Configure the generative AI library with the API key
-        gemini_api_key = env_first("GEMINI_API_KEY")
-        if not gemini_api_key:
-            return jsonify({"error": "GEMINI_API_KEY is not configured on the server."}), 500
-        
-        genai.configure(api_key=gemini_api_key)
-        
-        # Create the model
-        model_name = 'gemini-pro-latest'
-        app.logger.info(f"Attempting to use Gemini model: {model_name}")
-        model = genai.GenerativeModel(model_name)
-        
-        # Send the message and get the response
-        response = model.generate_content(user_message)
-        
-        bot_response = response.text
+        xai_api_key = env_first("XAI_API_KEY")
+        if not xai_api_key:
+            return jsonify({"error": "XAI_API_KEY is not configured on the server."}), 500
+
+        client = Client(api_key=xai_api_key)
+
+        model_name = "grok-1.5-flash"
+        app.logger.info(f"Attempting to use Grok model: {model_name}")
+        chat = client.chat.create(model=model_name)
+        chat.append(system("You are a helpful assistant."))
+        chat.append(user(user_message))
+        response = chat.sample()
+        bot_response = response.content
 
     except Exception as e:
-        app.logger.error(f"Gemini API Error: {e}")
+        app.logger.error(f"Grok API Error: {e}")
         bot_response = "Sorry, I'm having trouble connecting to my brain right now."
-    # --------------------------------
 
     return jsonify({"response": bot_response})
 
