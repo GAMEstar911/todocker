@@ -621,25 +621,26 @@ if xai_api_key_for_models:
 @app.route("/grok-models")
 @login_required
 def grok_models():
-    if not grok_model_client:
-        flash("Grok model listing is not configured on the server (XAI_API_KEY is missing).", "warning")
+    print("--- ENTERING /grok-models ROUTE ---")
+
+    # First, check if the key is missing. If so, stop here.
+    if not os.getenv("XAI_API_KEY"):
+        flash("Grok API key is not configured on the server.", "danger")
         return render_template("grok_models.html", models=[])
+
+    # If the key exists, THEN try to use it.
     try:
         models = grok_model_client.models.list()
         return render_template("grok_models.html", models=models.data)
     except Exception as e:
-        print("--- ERROR IN /grok-models ---")
-        print(f"Exception Type: {type(e)}")
-        print(f"Exception Details: {e}")
-        traceback.print_exc()
-        print("-----------------------------")
+        # ... (our aggressive logging) ...
         flash(f"Could not retrieve Grok models: {e}", "danger")
         return render_template("grok_models.html", models=[])
-
 
 @app.route("/chatbot")
 @login_required
 def chatbot():
+    print("--- ENTERING /chatbot ROUTE ---")
     return render_template("chatbot.html")
 
 @app.route("/ask", methods=["POST"])
