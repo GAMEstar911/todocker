@@ -67,7 +67,7 @@ if is_production:
     debug_mode = False
 
 app = Flask(__name__)
-app.secret_key = env_first("SECRET_KEY")
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 if not app.secret_key:
     raise RuntimeError("SECRET_KEY is required")
 
