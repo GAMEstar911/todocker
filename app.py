@@ -75,15 +75,19 @@ if not app.secret_key:
 def normalize_database_uri(uri):
     if not uri:
         return uri
-    # Railway often provides mysql://..., but SQLAlchemy needs mysql+pymysql://...
+    # Render provides postgres://, but SQLAlchemy needs postgresql://
+    if uri.startswith("postgres://"):
+        return "postgresql://" + uri[len("postgres://"):]
+    # Railway provides mysql://, but SQLAlchemy needs mysql+pymysql://
     if uri.startswith("mysql://"):
         return "mysql+pymysql://" + uri[len("mysql://"):]
     return uri
 
 
-database_uri = normalize_database_uri(env_first("SQLALCHEMY_DATABASE_URI", "DATABASE_URL"))
-if not database_uri:
-    database_uri = normalize_database_uri(env_first("MYSQL_PUBLIC_URL", "MYSQL_URL"))
+# Prioritize full database URLs provided by hosting platforms like Render/Railway
+database_uri = normalize_database_uri(
+    env_first("DATABASE_URL", "SQLALCHEMY_DATABASE_URI", "MYSQL_PUBLIC_URL", "MYSQL_URL")
+)
 
 if not database_uri:
     # Prefer Railway-style keys first because MYSQL_HOST can be "db" from local compose.
