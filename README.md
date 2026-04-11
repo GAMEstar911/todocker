@@ -46,20 +46,27 @@ A secure, web-based platform that allows users to upload their own datasets and 
 
 This application is configured for production deployment on platforms like Railway.
 
+### API Usage
+
+You can also use the API to analyze datasets programmatically. You will need your API key, which can be generated from the "API Keys" page in the web application.
+
+Here is an example `curl` command:
+
+```bash
+curl -X POST \\
+     -H "Authorization: Bearer <YOUR_API_KEY>" \\
+     -F "dataset=@/path/to/your/dataset.csv" \\
+     http://127.0.0.1:5000/api/analyze
+```
+
+- **`-H "Authorization: Bearer <YOUR_API_KEY>"`**: This sets the required authentication header. Replace `<YOUR_API_KEY>` with your actual key.
+- **`-F "dataset=@/path/to/your/dataset.csv"`**: This attaches your CSV file to the request. Replace the path with the correct path to your file.
+
+The server will respond with a JSON object containing the analysis results.
+
 ### Environment Variables
 The application uses a `.env` file for configuration. Key variables include database credentials and email settings.
 
-### Email Backend (Important for Railway)
-Railway's free plan blocks outbound SMTP traffic. To ensure password reset emails work, you must use an API-based email service like Resend.
-
-Set the following environment variables in your deployment environment:
-```env
-EMAIL_BACKEND=resend
-RESEND_API_KEY=your_resend_api_key
-RESEND_FROM_EMAIL=no-reply@your-verified-domain.com
-```
-
----
 
 ## 🤝 Contributing
 
